@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/survey.css">
+</head>
+<body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <main class="survey-page">
+        <section class="survey-shell">
+            <div class="survey-top">
+                <span class="survey-badge">Campus mobiliteit</span>
+                <h1>Hoe kom jij naar de campus?</h1>
+                <p>
+                    We onderzoeken of een carpoolplatform op campus echt nuttig en duurzaam zou zijn.
+                    Deze korte bevraging helpt ons om dat goed te onderbouwen.
+                </p>
+            </div>
+
+            <div class="survey-progress-wrap">
+                <div class="survey-progress-bar" id="progressBar"></div>
+            </div>
+            <p class="progress-text" id="progressText">Stap 1</p>
+
+            <form id="surveyForm" class="survey-card">
+                <div id="questionContainer"></div>
+
+                <div class="survey-actions">
+                    <button type="button" id="prevBtn" class="btn btn-secondary">Vorige</button>
+                    <button type="button" id="nextBtn" class="btn btn-primary">Volgende</button>
+                    <button type="submit" id="submitBtn" class="btn btn-primary hidden">Verzenden</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script src="/js/survey.js"></script>
+</body>
+</html>

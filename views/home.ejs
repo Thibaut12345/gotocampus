@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/home.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="logo">Carpool</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="#">Ritten</a></li>
+                <li><a href="#">Aanbieden</a></li>
+                <li><a href="#">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-text">
+                <h1>Samen rijden, goedkoper en slimmer</h1>
+                <p>
+                    Vind eenvoudig een rit of bied zelf een plaats aan.
+                    Snel, overzichtelijk en handig voor studenten en pendelaars.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#" class="btn primary">Zoek een rit</a>
+                    <a href="#" class="btn secondary">Bied een rit aan</a>
+                </div>
+            </div>
+
+            <div class="hero-card">
+                <h2>Zoek snel een rit</h2>
+                <form class="search-box">
+                    <input type="text" placeholder="Vertrekpunt">
+                    <input type="text" placeholder="Bestemming">
+                    <input type="date">
+                    <button type="button" id="searchBtn">Zoeken</button>
+                </form>
+                <p id="searchMessage" class="message"></p>
+            </div>
+        </section>
+
+        <section class="features">
+            <h2>Waarom Carpool?</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>Goedkoper</h3>
+                    <p>Deel je kosten met anderen en bespaar op elke rit.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Duurzamer</h3>
+                    <p>Minder auto's op de baan betekent minder uitstoot.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>Eenvoudig</h3>
+                    <p>Zoek of plaats een rit in enkele klikken.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="interactive-section">
+            <h2>Interactieve demo</h2>
+            <p>Klik op de knop en ontdek hoeveel mensen al mee carpoolen.</p>
+            <button id="countBtn" class="fun-btn">Toon aantal gebruikers</button>
+            <p id="countResult" class="count-result"></p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 Carpool Platform - Samen onderweg</p>
+    </footer>
+
+    <script src="/js/home.js"></script>
+</body>
+</html>
