@@ -13,6 +13,7 @@ let currentQuestionId = "role";
 const iconMap = {
     "Student": "🎓",
     "Personeel": "💼",
+    "Overig":"👤",
     "1": "1️⃣",
     "2": "2️⃣",
     "3": "3️⃣",
@@ -45,12 +46,14 @@ const iconMap = {
     "Heel belangrijk": "⭐",
     "Belangrijk": "✨",
     "Beetje belangrijk": "🔹",
-    "Niet belangrijk": "▫️"
+    "Niet belangrijk": "▫️",
+    "Enkel met studenten":"🧑‍🎓", 
+    "Maakt mij niet uit":"🤷"
 };
 
 const questions = {
     role: {
-        label: "Ben je student of personeel?",
+        label: "Ben je student, personeel of overig?",
         help: "Zo kunnen we later beter analyseren welke groepen het vaakst naar de campus komen.",
         type: "choice",
         options: ["Student", "Personeel"],
@@ -113,7 +116,7 @@ const questions = {
     },
 
     freeSeats: {
-        label: "Hoeveel vrije plaatsen heb je meestal nog in de auto?",
+        label: "Met hoeveel personen zit je in de auto?",
         help: "Een schatting is voldoende.",
         type: "input",
         inputType: "number",
@@ -137,7 +140,7 @@ const questions = {
         help: "Kies de reden die voor jou het zwaarst doorweegt.",
         type: "choice",
         options: ["Lagere kost", "Minder uitstoot", "Gezelliger", "Makkelijker parkeren", "Tijdswinst", "Andere reden"],
-        next: () => "sustainabilityPriority"
+        next: () => "ovToCarpoolStudent"
     },
 
     ovSatisfaction: {
@@ -153,6 +156,16 @@ const questions = {
         help: "Bijvoorbeeld als routes en tijdstippen makkelijk op elkaar afgestemd worden.",
         type: "choice",
         options: ["Ja", "Misschien", "Nee"],
+        next: (value) => {
+            if (value === "Ja" || value === "Misschien") return "ovToCarpoolStudent";
+            return "sustainabilityPriority";
+        }
+    },
+    ovToCarpoolStudent: {
+        label: "Met wie zou je willen carpolen",
+        help: "Dit gaat vooral over de invloed op het willen carpolen",
+        type: "choice",
+        options: ["Enkel met studenten", "Maakt mij niet uit"],
         next: () => "sustainabilityPriority"
     },
 
@@ -170,7 +183,10 @@ const questions = {
         help: "Zelfs een occasionele overstap is nuttige info voor ons onderzoek.",
         type: "choice",
         options: ["Ja", "Misschien", "Nee"],
-        next: () => "sustainabilityPriority"
+        next: (value) => {
+            if (value === "Ja" || value === "Misschien") return "ovToCarpoolStudent";
+            return "sustainabilityPriority";
+        }
     },
 
     walkTime: {
@@ -187,7 +203,10 @@ const questions = {
         help: "Voor korte afstanden is dat vaak niet relevant, maar voor andere locaties misschien wel.",
         type: "choice",
         options: ["Ja", "Misschien", "Nee"],
-        next: () => "sustainabilityPriority"
+        next: (value) => {
+            if (value === "Ja" || value === "Misschien") return "ovToCarpoolStudent";
+            return "sustainabilityPriority";
+        }
     },
 
     otherTransport: {
@@ -220,8 +239,17 @@ const questions = {
         help: "Hier kan je kort je mening of ervaring delen.",
         type: "textarea",
         placeholder: "Bijvoorbeeld: veel studenten komen uit dezelfde regio, parking is lastig, OV sluit niet goed aan, ...",
-        next: () => "email"
+        required:false,
+        next: () => "existingPlatform"
     },
+
+    existingPlatform: {
+    label: "Wist je dat er al een initiatief is?",
+    help: "Voor wie nu al wil starten: op carpool.be kun je vandaag al ritten zoeken of aanbieden.",
+    type: "info",
+    content: "Ontdek het bestaande platform op <a href='https://www.carpool.be' target='_blank'>carpool.be</a>.",
+    next: () => "email"
+},
 
     email: {
         label: "Wil je je e-mailadres achterlaten voor verdere opvolging of resultaten?",
@@ -229,6 +257,7 @@ const questions = {
         type: "input",
         inputType: "email",
         placeholder: "jouwmail@voorbeeld.be",
+        required:false,
         next: () => "summary"
     },
 
@@ -293,6 +322,7 @@ function renderQuestion(questionId) {
                     class="text-input"
                     type="${question.inputType || "text"}"
                     name="question"
+                    min="0"
                     value="${answers[questionId] || ""}"
                     placeholder="${question.placeholder || ""}"
                 >
@@ -300,17 +330,26 @@ function renderQuestion(questionId) {
         `;
     }
 
-    if (question.type === "textarea") {
-        html += `
-            <div class="input-wrap">
-                <textarea
-                    class="text-area"
-                    name="question"
-                    placeholder="${question.placeholder || ""}"
-                >${answers[questionId] || ""}</textarea>
-            </div>
-        `;
-    }
+   if (question.type === "textarea") {
+    html += `
+        <div class="input-wrap">
+            <textarea
+                class="text-area"
+                name="question"
+                data-required="${question.required !== false}" 
+                placeholder="${question.placeholder || ""}"
+            >${answers[questionId] || ""}</textarea>
+        </div>
+    `;
+}
+
+if (question.type === "info") {
+    html += `
+        <div class="info-box">
+            <p class="info-text">${question.content}</p>
+        </div>
+    `;
+}
 
     if (question.type === "summary") {
         html += `<div class="summary-box">`;
@@ -382,9 +421,15 @@ function validateCurrentQuestion() {
     const question = questions[currentQuestionId];
     const value = getCurrentValue();
     const errorMessage = document.getElementById("errorMessage");
+    const isRequired = question.required !== false;
 
-    if (question.type !== "summary" && !value) {
+    if (question.type !== "summary" && question.type !== "info" && isRequired && !value) {
         errorMessage.textContent = "Vul eerst een antwoord in.";
+        return false;
+    }
+    
+    if (question.inputType === "number" && parseFloat(value) < 0) {
+        errorMessage.textContent = "Een negatieve afstand is niet mogelijk.";
         return false;
     }
 

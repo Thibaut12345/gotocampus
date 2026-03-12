@@ -52,7 +52,8 @@ const impactData = {
         cost: "± €4,00",
         co2: "± 3,6 kg CO₂",
         compare: "Vergelijkbaar met 18 km extra autorijden",
-        highlight: "Als meerdere mensen apart rijden, stapelen brandstofverbruik, parkeerdruk en uitstoot zich snel op."
+        highlight: "Als meerdere mensen apart rijden, stapelen brandstofverbruik, parkeerdruk en uitstoot zich snel op.",
+        label:"ongeveer €16 per week • €192 per semester"
     },
     carpool: {
         title: "Carpoolen met 3",
@@ -60,7 +61,8 @@ const impactData = {
         cost: "± €1,33 per persoon",
         co2: "± 1,2 kg CO₂ per persoon",
         compare: "Tot ongeveer 66% minder impact per persoon",
-        highlight: "Carpoolen kan dus tegelijk goedkoper, duurzamer en efficiënter zijn, vooral als meerdere mensen een gelijkaardig traject hebben."
+        highlight: "Carpoolen kan dus tegelijk goedkoper, duurzamer en efficiënter zijn, vooral als meerdere mensen een gelijkaardig traject hebben.",
+        label:"Ongeveer €1,33 per week"
     },
     bus: {
         title: "Openbaar vervoer",
@@ -68,7 +70,8 @@ const impactData = {
         cost: "Afhankelijk van abonnement of ticket",
         co2: "Meestal lager per persoon dan solo-auto",
         compare: "Vergelijkbaar met het delen van de impact over tientallen reizigers",
-        highlight: "Als de verbinding goed is, kan openbaar vervoer een sterke duurzame optie zijn, al blijft flexibiliteit soms een nadeel."
+        highlight: "Als de verbinding goed is, kan openbaar vervoer een sterke duurzame optie zijn, al blijft flexibiliteit soms een nadeel.",
+        label:"Ongeveer €5 per week"
     },
     fiets: {
         title: "Met de fiets",
@@ -76,7 +79,8 @@ const impactData = {
         cost: "Bijna nihil per rit",
         co2: "Verwaarloosbaar in gebruik",
         compare: "Je bespaart tegelijk uitstoot, brandstof en parkeerdruk",
-        highlight: "Voor wie dicht genoeg woont, is fietsen vaak de meest duurzame keuze. Maar voor grotere afstanden kan carpoolen een realistischer alternatief zijn."
+        highlight: "Voor wie dicht genoeg woont, is fietsen vaak de meest duurzame keuze. Maar voor grotere afstanden kan carpoolen een realistischer alternatief zijn.",
+        label:"Ongeveer €0 per week"
     }
 };
 
@@ -86,6 +90,7 @@ const impactCost = document.getElementById("impactCost");
 const impactCO2 = document.getElementById("impactCO2");
 const impactCompare = document.getElementById("impactCompare");
 const impactHighlight = document.getElementById("impactHighlight");
+const impactLabel = document.getElementById("impactLabel");
 
 impactChoices.forEach((button) => {
     button.addEventListener("click", () => {
@@ -101,5 +106,6 @@ impactChoices.forEach((button) => {
         impactCO2.textContent = data.co2;
         impactCompare.textContent = data.compare;
         impactHighlight.textContent = data.highlight;
+        impactLabel.textContent = data.label;
     });
 });
