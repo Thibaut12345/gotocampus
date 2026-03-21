@@ -7,305 +7,330 @@
     <link rel="stylesheet" href="/css/home.css">
 </head>
 <body>
-    <div class="bg-glow glow-1"></div>
-    <div class="bg-glow glow-2"></div>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
 
     <header class="site-header">
-        <div class="container nav">
-            <div class="brand">
-                <div class="brand-dot"></div>
-                <span>Campus Carpool</span>
-            </div>
+        <div class="container nav-shell">
+            <div class="nav">
+                <a href="#" class="brand">
+                    <div class="brand-icon">C</div>
+                    <div class="brand-text">
+                        <span class="brand-title">Go To Campus</span>
+                        <span class="brand-subtitle">Slimmere mobiliteit op campus</span>
+                    </div>
+                </a>
 
-            <nav class="nav-links">
-                <a href="#over">Over</a>
-                <a href="#waarom">Waarom</a>
-                <a href="#team">Team</a>
-                <a href="/survey" class="nav-cta">Vragenlijst</a>
-            </nav>
+                <nav class="nav-links desktop-nav">
+                    <a href="#probleem">Probleem</a>
+                    <a href="#impact">Impact</a>
+                    <a href="#aanpak">Aanpak</a>
+                    <a href="#team">Team</a>
+                </nav>
+
+                <div class="nav-actions desktop-actions">
+                    <button id="themeToggle" class="theme-toggle" aria-label="Thema wisselen">
+                        <span class="theme-icon">☀</span>
+                        <span class="theme-icon">☾</span>
+                    </button>
+                    <a href="/survey" class="btn btn-primary nav-btn">Vul de vragenlijst in</a>
+                </div>
+
+                <div class="mobile-controls">
+                    <button id="themeToggleMobile" class="theme-toggle" aria-label="Thema wisselen">
+                        <span class="theme-icon">☀</span>
+                        <span class="theme-icon">☾</span>
+                    </button>
+
+                    <button id="menuToggle" class="menu-toggle" aria-label="Menu openen" aria-expanded="false">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </div>
+
+                <div id="mobileMenu" class="mobile-menu">
+                    <nav class="mobile-nav-links">
+                        <a href="#probleem">Probleem</a>
+                        <a href="#impact">Impact</a>
+                        <a href="#aanpak">Aanpak</a>
+                        <a href="#team">Team</a>
+                    </nav>
+
+                    <a href="/survey" class="btn btn-primary mobile-cta">Vul de vragenlijst in</a>
+                </div>
+            </div>
         </div>
     </header>
 
     <main>
         <section class="hero container">
             <div class="hero-text">
-                <div class="badge">Duurzaamheidsproject</div>
+                <div class="pill">Duurzame mobiliteit • Studentenproject</div>
+
                 <h1>
-                    Slimmer naar de campus,
-                    samen in plaats van apart
+                    Wij onderzoeken of carpoolen
+                    op campus echt nuttig kan zijn
                 </h1>
+
                 <p class="hero-description">
-                    Wij zijn Thibaut, Mathieu en Quinten en werken aan een project rond duurzame campusmobiliteit.
-                    Met dit onderzoek willen we nagaan hoe studenten en personeel zich vandaag verplaatsen,
-                    zou een carpoolplatform voor de campus nuttig zijn en hoeveel impact een slimmere
-                    vervoerskeuze kan hebben op de kost, uitstoot en efficiëntie.
+                    Wij zijn Thibaut, Mathieu en Quinten. Met dit project willen we begrijpen
+                    of mensen met gelijkaardige trajecten makkelijker ritten zouden kunnen delen,
+                    en of dat de mobiliteit op campus goedkoper, slimmer en duurzamer kan maken.
                 </p>
+
                 <div class="hero-buttons">
-                    <a href="/survey" class="btn btn-primary">Ga naar de vragenlijst</a>
-                    <a href="#over" class="btn btn-secondary">Ontdek het project</a>
+                    <a href="/survey" class="btn btn-primary">Doe mee aan het onderzoek</a>
+                    <a href="#impact" class="btn btn-secondary">Bekijk jouw impact</a>
                 </div>
 
-                <div class="hero-stats">
-                    <div class="stat-card interactive-card" data-message="Elke ingevulde vragenlijst helpt ons om het mobiliteitsprobleem op campus beter te begrijpen.">
-                        <span class="stat-number" data-target="3">0</span>
-                        <span class="stat-label">Jouw toevoeging</span>
-                    </div>
-                    <div class="stat-card interactive-card" data-message="We focussen op mobiliteit, duurzaamheid en de haalbaarheid van carpoolen op campus.">
-                        <span class="stat-number" data-target="2">0</span>
-                        <span class="stat-label">Hoofddoelen</span>
-                    </div>
-                    <div class="stat-card interactive-card" data-message="Jullie antwoorden vormen de basis van ons onderzoek en mogelijke oplossing.">
-                        <span class="stat-number" data-target="1">0</span>
-                        <span class="stat-label">Gedeelde missie</span>
-                    </div>
+                <div class="hero-note glass-card">
+                    <strong>De centrale vraag:</strong>
+                    hoeveel ritten zouden gedeeld kunnen worden als mensen met een gelijkaardig traject
+                    elkaar eenvoudiger konden vinden?
                 </div>
-
-                <p id="cardMessage" class="card-message">Klik op een kaartje hierboven.</p>
             </div>
 
             <div class="hero-visual">
-                <div class="floating-panel big-panel">
-                    <div class="panel-top">
-                        <span class="panel-tag">Projectfocus</span>
-                    </div>
-                    <h3>Duurzame campusmobiliteit</h3>
+                <div class="glass-card hero-main-card">
+                    <div class="mini-label">Waarom dit telt</div>
+                    <h3>Een kleine keuze, grote impact</h3>
                     <p>
-                        kan zorgen voor minder individuele autoritten en geeft ons een beter inzicht in verplaatsingsgedrag. Daarom
-                        willen we onderzoeken of carpoolen haalbaar is voor onze campus.
+                        Eén rit lijkt onschuldig. Maar wanneer veel mensen elke week alleen rijden
+                        naar dezelfde plek, lopen kost, uitstoot en parkeerdruk snel op.
                     </p>
+
+                    <div class="hero-main-grid">
+                        <div class="mini-stat">
+                            <span class="mini-stat-title">Minder kosten</span>
+                            <span class="mini-stat-text">gedeelde verplaatsingen zijn efficiënter</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-title">Minder uitstoot</span>
+                            <span class="mini-stat-text">minder wagens voor dezelfde bestemming</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="floating-panel small-panel panel-1">
+                <div class="glass-card floating-chip chip-1">
                     <span>🚗</span>
-                    <p>Carpoolpotentieel</p>
+                    <p>te veel solo-ritten</p>
                 </div>
 
-                <div class="floating-panel small-panel panel-2">
-                    <span>🌱</span>
-                    <p>Duurzaamheid</p>
+                <div class="glass-card floating-chip chip-2">
+                    <span>🌍</span>
+                    <p>onnodige uitstoot</p>
                 </div>
 
-                <div class="floating-panel small-panel panel-3">
-                    <span>📊</span>
-                    <p>Data verzamelen</p>
+                <div class="glass-card floating-chip chip-3">
+                    <span>🤝</span>
+                    <p>kans op delen</p>
                 </div>
             </div>
         </section>
 
-        <section id="over" class="section container">
-            <div class="section-heading">
-                <span class="section-kicker">Over ons project</span>
-                <h2>Wat willen we precies onderzoeken?</h2>
+        <section id="probleem" class="section container">
+            <div class="section-heading center">
+                <span class="section-kicker">Het probleem</span>
+                <h2>Veel mensen maken bijna dezelfde verplaatsing, maar doen dat alleen</h2>
                 <p>
-                    Dit project draait niet enkel om “een website maken”. We willen nagaan
-                    of er op onze campus een nood is aan een carpooloplossing en welke impact dit kan hebben op duurzaamheid en mobiliteit.
+                    Op een campus komen dagelijks studenten en personeel samen vanuit verschillende richtingen.
+                    Toch rijdt een groot deel van die mensen alleen met de auto, zelfs wanneer trajecten sterk overlappen.
                 </p>
             </div>
 
             <div class="info-grid">
-                <article class="info-card">
-                    <div class="info-icon">🎯</div>
-                    <h3>Ons doel</h3>
+                <article class="glass-card info-card">
+                    <div class="info-icon">💸</div>
+                    <h3>Hogere kost</h3>
                     <p>
-                        In kaart brengen hoe mensen naar de campus komen en de impact dat een carpoolplatform kan hebben.
+                        Alleen rijden betekent dat brandstof- en autokosten volledig door één persoon gedragen worden,
+                        ook wanneer anderen bijna exact dezelfde route afleggen.
                     </p>
                 </article>
 
-                <article class="info-card">
-                    <div class="info-icon">📍</div>
-                    <h3>Onze aanpak</h3>
+                <article class="glass-card info-card">
+                    <div class="info-icon">🌫️</div>
+                    <h3>Meer uitstoot</h3>
                     <p>
-                        Via een interactieve vragenlijst verzamelen we gegevens over
-                        vervoersmiddelen, gewoontes en bereidheid om te carpoolen.
+                        Drie aparte auto’s voor éénzelfde bestemming veroorzaken veel meer uitstoot
+                        dan één gedeelde rit.
                     </p>
                 </article>
 
-                <article class="info-card">
-                    <div class="info-icon">🌍</div>
-                    <h3>Onze motivatie</h3>
+                <article class="glass-card info-card">
+                    <div class="info-icon">🅿️</div>
+                    <h3>Meer parkeerdruk</h3>
                     <p>
-                        Als minder mensen alleen met de auto komen, kan dat leiden tot
-                        minder uitstoot, minder parkeerdruk en een efficiëntere campusmobiliteit.
+                        Meer individuele wagens betekent ook meer druk op parkings en infrastructuur,
+                        terwijl een deel van die ritten mogelijk combineerbaar is.
                     </p>
                 </article>
             </div>
         </section>
 
-        <section id="waarom" class="section section-alt">
+        <section id="impact" class="section section-soft">
             <div class="container">
                 <div class="section-heading center">
-                    <span class="section-kicker">Waarom doen we dit?</span>
-                    <h2>Niet zomaar een idee, maar een probleem dat we willen begrijpen</h2>
+                    <span class="section-kicker">Interactieve impact</span>
+                    <h2>Bereken hoe zwaar jouw traject doorweegt</h2>
+                    <p>
+                        Vul een eenvoudig scenario in en ontdek hoeveel verschil solo rijden,
+                        carpoolen, openbaar vervoer of fietsen kan maken over een semester.
+                    </p>
                 </div>
 
-                <div class="reason-layout">
-                    <div class="reason-text">
-                        <p>
-                            Op veel campussen komen studenten en personeel elke dag vanuit verschillende richtingen
-                            naar dezelfde plek. Toch rijdt een groot deel daarvan nog altijd individueel.
-                        </p>
-                        <p>
-                            Wij willen onderzoek doen naar de kansen voor een slimmere oplossing.
-                            Niet op basis van aannames, maar op basis van echte data.
-                        </p>
-                        <p>
-                            Daarom starten we met een vragenlijst: om te ontdekken hoeveel mensen met de auto,
-                            fiets, te voet of met het openbaar vervoer komen en om te zien of carpoolen
-                            voor bepaalde groepen echt een haalbaar alternatief kan zijn.
-                        </p>
+                <div class="impact-simulator">
+                    <div class="glass-card simulator-form">
+                        <h3>Jouw traject</h3>
+
+                        <label for="distanceRange">
+                            Afstand enkele rit
+                            <input type="range" id="distanceRange" min="2" max="40" value="10">
+                            <div class="range-value"><span id="distanceValue">10</span> km</div>
+                        </label>
+
+                        <label for="daysRange">
+                            Aantal dagen per week
+                            <input type="range" id="daysRange" min="1" max="7" value="4">
+                            <div class="range-value"><span id="daysValue">4</span> dagen</div>
+                        </label>
+
+                        <label for="weeksRange">
+                            Aantal weken
+                            <input type="range" id="weeksRange" min="4" max="20" value="12">
+                            <div class="range-value"><span id="weeksValue">12</span> weken</div>
+                        </label>
+
+                        <label for="transportMode">
+                            Hoe reis je?
+                            <select id="transportMode">
+                                <option value="auto">Alleen met de auto</option>
+                                <option value="carpool">Carpoolen met 3</option>
+                                <option value="bus">Openbaar vervoer</option>
+                                <option value="fiets">Met de fiets</option>
+                            </select>
+                        </label>
                     </div>
 
-                    <div class="reason-box">
-                        <h3>Wat hopen we te ontdekken?</h3>
-                        <ul>
-                            <li>Hoeveel mensen met de auto naar de campus komen</li>
-                            <li>De bereidheid om te carpoolen</li>
-                            <li>Welke factoren belangrijk zijn: kost, tijd, parking, duurzaamheid</li>
-                            <li>De waarde dat een platform op de campus kan toevoegen</li>
-                        </ul>
+                    <div class="glass-card simulator-result">
+                        <p class="impact-mini-title">Geschatte impact over jouw gekozen periode</p>
+                        <h3 id="resultTitle">Alleen met de auto</h3>
+
+                        <div class="impact-stats">
+                            <div class="impact-stat">
+                                <span class="impact-value" id="resultDistance">960 km</span>
+                                <span class="impact-label">totale afgelegde afstand</span>
+                            </div>
+
+                            <div class="impact-stat">
+                                <span class="impact-value" id="resultCost">€192</span>
+                                <span class="impact-label">geschatte totale kost</span>
+                            </div>
+
+                            <div class="impact-stat">
+                                <span class="impact-value" id="resultCO2">172.8 kg CO₂</span>
+                                <span class="impact-label">geschatte uitstoot</span>
+                            </div>
+                        </div>
+
+                        <div class="impact-highlight" id="resultInsight">
+                            Als drie mensen dit traject elk apart met de auto doen, loopt de gezamenlijke uitstoot sterk op.
+                        </div>
+
+                        <div class="comparison-box">
+                            <h4>Vergelijking</h4>
+                            <p id="comparisonText">
+                                Door deze rit te delen, daalt de impact per persoon sterk.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="section container">
+        <section id="aanpak" class="section container">
             <div class="section-heading center">
-                <span class="section-kicker">Interactieve impact</span>
-                <h2>Wat betekent jouw vervoerskeuze eigenlijk?</h2>
+                <span class="section-kicker">Onze aanpak</span>
+                <h2>We willen eerst begrijpen, dan pas bouwen</h2>
                 <p>
-                    Stel dat iemand 10 km van de campus woont (20 km heen en terug) en
-                    4 dagen per week naar de campus komt. Klik op een vervoersmiddel
-                    en ontdek hoeveel verschil dat maakt in kost en uitstoot.
+                    Een goed platform begint niet bij code, maar bij inzicht. Daarom onderzoeken we eerst
+                    hoe mensen zich vandaag verplaatsen en welke drempels of kansen er zijn.
                 </p>
             </div>
 
-            <div class="impact-layout">
-
-                <div class="impact-choice-grid">
-                    <button class="impact-choice active" data-mode="auto">
-                        🚗 Alleen met de auto
-                    </button>
-
-                    <button class="impact-choice" data-mode="carpool">
-                        👥 Carpoolen met 3
-                    </button>
-
-                    <button class="impact-choice" data-mode="bus">
-                        🚌 Openbaar vervoer
-                    </button>
-
-                    <button class="impact-choice" data-mode="fiets">
-                        🚲 Met de fiets
-                    </button>
-                </div>
-
-
-                <div class="impact-card">
-
-                    <p class="impact-mini-title">
-                        Voorbeeld: 20 km per dag • 4 dagen per week
+            <div class="info-grid">
+                <article class="glass-card info-card">
+                    <div class="info-icon">📋</div>
+                    <h3>Vragenlijst</h3>
+                    <p>
+                        We verzamelen gegevens over afstand, vervoersmiddel, gewoontes en bereidheid om ritten te delen.
                     </p>
+                </article>
 
-                    <h3 id="impactTitle">Alleen met de auto</h3>
-
-                    <p id="impactDescription" class="impact-description">
-                        Eén persoon rijdt alleen met de auto naar de campus. Dit is vaak
-                        comfortabel, maar ook de minst efficiënte keuze wanneer meerdere
-                        mensen hetzelfde traject rijden.
+                <article class="glass-card info-card">
+                    <div class="info-icon">📊</div>
+                    <h3>Analyse</h3>
+                    <p>
+                        Daarna kijken we waar overlap zit in trajecten en of een campusgerichte oplossing echt zinvol is.
                     </p>
+                </article>
 
-                    <div class="impact-stats">
-
-                        <div class="impact-stat">
-                            <span class="impact-value" id="impactCost">
-                                ± €4 per dag
-                            </span>
-                            <span class="impact-label" id="impactLabel">
-                                ongeveer €16 per week • €192 per semester
-                            </span>
-                        </div>
-
-                        <div class="impact-stat">
-                            <span class="impact-value" id="impactCO2">
-                                ± 3.6 kg CO₂ per dag
-                            </span>
-                            <span class="impact-label" id="impactLabel">
-                                ongeveer 58 kg CO₂ per semester
-                            </span>
-                        </div>
-
-                        <div class="impact-stat">
-                            <span class="impact-value" id="impactCompare">
-                                ≈ uitstoot van 30 km extra autorijden
-                            </span>
-                            <span class="impact-label" id="impactLabel">
-                                per dag voor één persoon
-                            </span>
-                        </div>
-
-                    </div>
-
-                    <div class="impact-highlight" id="impactHighlight">
-                        Als drie studenten elk apart rijden, kost dat samen ongeveer
-                        €576 en ±174 kg CO₂ per semester voor exact dezelfde verplaatsing.
-                    </div>
-
-                </div>
-
+                <article class="glass-card info-card">
+                    <div class="info-icon">🛠️</div>
+                    <h3>Concept</h3>
+                    <p>
+                        Pas als de nood duidelijk is, werken we verder aan een concreet en realistisch platformidee.
+                    </p>
+                </article>
             </div>
         </section>
-
 
         <section id="team" class="section container">
             <div class="section-heading center">
                 <span class="section-kicker">Ons team</span>
-                <h2>Wie werkt aan dit project?</h2>
+                <h2>Drie studenten, één gedeelde missie</h2>
                 <p>
-                    Dit project wordt uitgewerkt door drie studenten die samen willen onderzoeken
-                    hoe technologie en duurzaamheid elkaar kunnen versterken op campus.
+                    Wij zijn Thibaut, Mathieu en Quinten. Met dit project willen we onderzoeken
+                    hoe technologie campusmobiliteit slimmer en duurzamer kan maken.
                 </p>
             </div>
 
             <div class="team-grid">
-                <div class="team-card">
+                <article class="glass-card team-card">
                     <div class="team-avatar">T</div>
                     <h3>Thibaut</h3>
-                    <p>
-                        Werkt mee aan de technische uitwerking en de algemene visie van het project.
-                    </p>
-                </div>
+                    <p>Technische uitwerking, algemene visie en projectopbouw.</p>
+                </article>
 
-                <div class="team-card">
+                <article class="glass-card team-card">
                     <div class="team-avatar">M</div>
                     <h3>Mathieu</h3>
-                    <p>
-                        Denkt mee na over de opbouw van het onderzoek en de relevantie van de verzamelde data.
-                    </p>
-                </div>
+                    <p>Onderzoeksstructuur, relevantie en datagedreven aanpak.</p>
+                </article>
 
-                <div class="team-card">
+                <article class="glass-card team-card">
                     <div class="team-avatar">Q</div>
                     <h3>Quinten</h3>
-                    <p>
-                        Helpt mee aan de ontwikkeling van het concept en de analyse van de resultaten.
-                    </p>
-                </div>
+                    <p>Conceptontwikkeling en ondersteuning bij analyse en interpretatie.</p>
+                </article>
             </div>
         </section>
 
-        <section class="section cta-section">
-            <div class="container cta-box">
+        <section class="section container">
+            <div class="glass-card cta-box">
                 <div>
                     <span class="section-kicker">Doe mee</span>
-                    <h2>Help ons met ons onderzoek</h2>
+                    <h2>Jouw antwoord helpt bepalen of dit echt werkt</h2>
                     <p>
-                        Door de vragenlijst in te vullen help je ons de duurzaamheid en het effect van een carpoolplatform
-                        op de campus in te schatten.
+                        Met jouw input kunnen we beter inschatten of een carpoolplatform op campus
+                        niet alleen interessant klinkt, maar ook effectief nuttig en haalbaar is.
                     </p>
                 </div>
 
                 <div class="cta-actions">
-                    <a href="/survey" class="btn btn-primary big-btn">Start de vragenlijst</a>
+                    <a href="/survey" class="btn btn-primary big-btn">Vul de vragenlijst in</a>
                 </div>
             </div>
         </section>

@@ -9,6 +9,7 @@
 <body>
     <div class="bg-orb orb-1"></div>
     <div class="bg-orb orb-2"></div>
+    <div class="bg-grid"></div>
 
     <main class="survey-page">
         <section class="survey-shell">
@@ -16,28 +17,60 @@
                 <span class="survey-badge">Campus mobiliteit</span>
                 <h1>Hoe kom jij naar de campus?</h1>
                 <p>
-                    We onderzoeken het effect en de duurzaamheid van een carpoolplatform op de campus.
-                    Deze korte bevraging helpt ons om dit verder te onderbouwen.
+                    Hallo! Wij zijn <strong>Thibaut, Mathieu en Quinten</strong> en in het kader van ons onderzoek
+                    bekijken we hoe studenten en personeel zich naar de campus verplaatsen en of een slim
+                    carpoolplatform hierbij echt een meerwaarde kan zijn.
+                </p>
+                <p class="survey-top-sub">
+                    Deze bevraging past zich aan jouw antwoorden aan en duurt meestal minder dan 2 minuten.
                 </p>
             </div>
 
-            <div class="survey-progress-wrap">
-                <div class="survey-progress-bar" id="progressBar"></div>
-            </div>
-            <p class="progress-text" id="progressText">Stap 1</p>
+        
 
-            <form id="surveyForm" class="survey-card">
+            <div class="survey-meta">
+                <div class="survey-progress-wrap">
+                    <div class="survey-progress-bar" id="progressBar"></div>
+                </div>
+                <div class="survey-progress-row">
+                    <p class="progress-text" id="progressText">Stap 1 van 1</p>
+                    <p class="progress-subtext" id="progressSubtext">Je bent net gestart</p>
+                </div>
+            </div>
+
+            <form id="surveyForm" class="survey-card" novalidate>
+                <div id="topSubmitWrap" class="top-submit-wrap hidden">
+                    <div class="top-submit-box">
+                        <div>
+                            <strong>Klaar om te verzenden?</strong>
+                            <p>Je hoeft niet eerst helemaal naar beneden te scrollen.</p>
+                        </div>
+                        <button type="submit" id="submitBtnTop" class="btn btn-primary">Verzenden</button>
+                    </div>
+                </div>
+
                 <div id="questionContainer"></div>
 
                 <div class="survey-actions">
                     <button type="button" id="prevBtn" class="btn btn-secondary">Vorige</button>
-                    <button type="button" id="nextBtn" class="btn btn-primary">Volgende</button>
-                    <button type="submit" id="submitBtn" class="btn btn-primary hidden">Verzenden</button>
+
+                    <div class="survey-actions-right">
+                        <button type="button" id="skipBtn" class="btn btn-ghost hidden">Overslaan</button>
+                        <button type="button" id="nextBtn" class="btn btn-primary">Volgende</button>
+                        <button type="submit" id="submitBtn" class="btn btn-primary hidden">Verzenden</button>
+                    </div>
                 </div>
             </form>
         </section>
     </main>
 
+    <script>
+        window.SURVEY_CONFIG = {
+            submitUrl: "/api/survey",
+            thankYouUrl: "/survey/bedankt",
+            homeUrl: "/"
+        };
+    </script>
     <script src="/js/survey.js"></script>
 </body>
 </html>

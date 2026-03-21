@@ -1,111 +1,137 @@
-const statNumbers = document.querySelectorAll(".stat-number");
-const interactiveCards = document.querySelectorAll(".interactive-card");
-const cardMessage = document.getElementById("cardMessage");
+const body = document.body;
+const themeToggles = document.querySelectorAll("#themeToggle, #themeToggleMobile");
+const menuToggle = document.getElementById("menuToggle");
+const mobileMenu = document.getElementById("mobileMenu");
+const mobileMenuLinks = document.querySelectorAll(".mobile-nav-links a");
 
-function animateValue(element, target) {
-    let current = 0;
-    const increment = Math.max(1, Math.ceil(target / 30));
-
-    const timer = setInterval(() => {
-        current += increment;
-
-        if (current >= target) {
-            current = target;
-            clearInterval(timer);
-        }
-
-        element.textContent = current;
-    }, 35);
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme === "dark") {
+    body.classList.add("dark-mode");
 }
 
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-            const element = entry.target;
-            const target = parseInt(element.dataset.target, 10);
-
-            if (!element.dataset.animated) {
-                animateValue(element, target);
-                element.dataset.animated = "true";
-            }
-        }
-    });
-}, { threshold: 0.6 });
-
-statNumbers.forEach((number) => {
-    observer.observe(number);
-});
-
-interactiveCards.forEach((card) => {
-    card.addEventListener("click", () => {
-        const message = card.dataset.message;
-        cardMessage.textContent = message;
+themeToggles.forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+        body.classList.toggle("dark-mode");
+        localStorage.setItem("theme", body.classList.contains("dark-mode") ? "dark" : "light");
     });
 });
 
-const impactChoices = document.querySelectorAll(".impact-choice");
+menuToggle?.addEventListener("click", () => {
+    const isOpen = mobileMenu?.classList.toggle("open");
+    menuToggle.classList.toggle("active", isOpen);
+    menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+});
 
-const impactData = {
+mobileMenuLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+        mobileMenu?.classList.remove("open");
+        menuToggle?.classList.remove("active");
+        menuToggle?.setAttribute("aria-expanded", "false");
+    });
+});
+
+const distanceRange = document.getElementById("distanceRange");
+const daysRange = document.getElementById("daysRange");
+const weeksRange = document.getElementById("weeksRange");
+const transportMode = document.getElementById("transportMode");
+
+const distanceValue = document.getElementById("distanceValue");
+const daysValue = document.getElementById("daysValue");
+const weeksValue = document.getElementById("weeksValue");
+
+const resultTitle = document.getElementById("resultTitle");
+const resultDistance = document.getElementById("resultDistance");
+const resultCost = document.getElementById("resultCost");
+const resultCO2 = document.getElementById("resultCO2");
+const resultInsight = document.getElementById("resultInsight");
+const comparisonText = document.getElementById("comparisonText");
+
+const transportData = {
     auto: {
         title: "Alleen met de auto",
-        description: "Eén persoon rijdt alleen met de auto naar de campus. Dat is vaak comfortabel, maar per persoon meestal de minst efficiënte keuze qua uitstoot en kost.",
-        cost: "± €4,00",
-        co2: "± 3,6 kg CO₂",
-        compare: "Vergelijkbaar met 18 km extra autorijden",
-        highlight: "Als meerdere mensen apart rijden, stapelen brandstofverbruik, parkeerdruk en uitstoot zich snel op.",
-        label:"ongeveer €16 per week • €192 per semester"
+        costPerKm: 0.20,
+        co2PerKm: 0.18
     },
     carpool: {
         title: "Carpoolen met 3",
-        description: "Drie mensen delen één auto. Daardoor daalt de uitstoot en kost per persoon sterk, terwijl iedereen nog steeds relatief flexibel blijft.",
-        cost: "± €1,33 per persoon",
-        co2: "± 1,2 kg CO₂ per persoon",
-        compare: "Tot ongeveer 66% minder impact per persoon",
-        highlight: "Carpoolen kan dus tegelijk goedkoper, duurzamer en efficiënter zijn, vooral als meerdere mensen een gelijkaardig traject hebben.",
-        label:"Ongeveer €1,33 per week"
+        costPerKm: 0.20 / 3,
+        co2PerKm: 0.18 / 3
     },
     bus: {
         title: "Openbaar vervoer",
-        description: "Het openbaar vervoer verdeelt de impact over veel reizigers. De exacte uitstoot hangt af van het voertuig en de bezetting, maar per persoon is dit vaak gunstiger dan alleen rijden.",
-        cost: "Afhankelijk van abonnement of ticket",
-        co2: "Meestal lager per persoon dan solo-auto",
-        compare: "Vergelijkbaar met het delen van de impact over tientallen reizigers",
-        highlight: "Als de verbinding goed is, kan openbaar vervoer een sterke duurzame optie zijn, al blijft flexibiliteit soms een nadeel.",
-        label:"Ongeveer €5 per week"
+        costPerKm: 0.10,
+        co2PerKm: 0.08
     },
     fiets: {
         title: "Met de fiets",
-        description: "De fiets heeft in gebruik bijna geen directe uitstoot en is voor kortere afstanden vaak de efficiëntste en goedkoopste keuze.",
-        cost: "Bijna nihil per rit",
-        co2: "Verwaarloosbaar in gebruik",
-        compare: "Je bespaart tegelijk uitstoot, brandstof en parkeerdruk",
-        highlight: "Voor wie dicht genoeg woont, is fietsen vaak de meest duurzame keuze. Maar voor grotere afstanden kan carpoolen een realistischer alternatief zijn.",
-        label:"Ongeveer €0 per week"
+        costPerKm: 0.02,
+        co2PerKm: 0.005
     }
 };
 
-const impactTitle = document.getElementById("impactTitle");
-const impactDescription = document.getElementById("impactDescription");
-const impactCost = document.getElementById("impactCost");
-const impactCO2 = document.getElementById("impactCO2");
-const impactCompare = document.getElementById("impactCompare");
-const impactHighlight = document.getElementById("impactHighlight");
-const impactLabel = document.getElementById("impactLabel");
+function formatEuro(value) {
+    return "€" + value.toFixed(0);
+}
 
-impactChoices.forEach((button) => {
-    button.addEventListener("click", () => {
-        impactChoices.forEach((btn) => btn.classList.remove("active"));
-        button.classList.add("active");
+function formatKg(value) {
+    return value.toFixed(1) + " kg CO₂";
+}
 
-        const mode = button.dataset.mode;
-        const data = impactData[mode];
+function updateSimulator() {
+    if (
+        !distanceRange || !daysRange || !weeksRange || !transportMode ||
+        !distanceValue || !daysValue || !weeksValue ||
+        !resultTitle || !resultDistance || !resultCost || !resultCO2 ||
+        !resultInsight || !comparisonText
+    ) {
+        return;
+    }
 
-        impactTitle.textContent = data.title;
-        impactDescription.textContent = data.description;
-        impactCost.textContent = data.cost;
-        impactCO2.textContent = data.co2;
-        impactCompare.textContent = data.compare;
-        impactHighlight.textContent = data.highlight;
-        impactLabel.textContent = data.label;
-    });
+    const distance = Number(distanceRange.value);
+    const days = Number(daysRange.value);
+    const weeks = Number(weeksRange.value);
+    const mode = transportMode.value;
+
+    distanceValue.textContent = distance;
+    daysValue.textContent = days;
+    weeksValue.textContent = weeks;
+
+    const totalKm = distance * 2 * days * weeks;
+
+    const current = transportData[mode];
+    const auto = transportData.auto;
+    const carpool = transportData.carpool;
+
+    const totalCost = totalKm * current.costPerKm;
+    const totalCO2 = totalKm * current.co2PerKm;
+
+    const autoCost = totalKm * auto.costPerKm;
+    const autoCO2 = totalKm * auto.co2PerKm;
+    const carpoolCost = totalKm * carpool.costPerKm;
+    const carpoolCO2 = totalKm * carpool.co2PerKm;
+
+    resultTitle.textContent = current.title;
+    resultDistance.textContent = `${totalKm} km`;
+    resultCost.textContent = formatEuro(totalCost);
+    resultCO2.textContent = formatKg(totalCO2);
+
+    if (mode === "auto") {
+        resultInsight.textContent = `Als drie mensen dit traject elk apart met de auto doen, loopt de gezamenlijke uitstoot op tot ${formatKg(totalCO2 * 3)}.`;
+        comparisonText.textContent = `Met carpoolen zou de kost per persoon dalen van ${formatEuro(autoCost)} naar ongeveer ${formatEuro(carpoolCost)}, en de uitstoot per persoon van ${formatKg(autoCO2)} naar ${formatKg(carpoolCO2)}.`;
+    } else if (mode === "carpool") {
+        resultInsight.textContent = `Door deze rit te delen, daalt de impact per persoon sterk terwijl het traject hetzelfde blijft.`;
+        comparisonText.textContent = `Vergeleken met alleen rijden bespaar je ongeveer ${formatEuro(autoCost - carpoolCost)} en ${formatKg(autoCO2 - carpoolCO2)} per persoon over deze periode.`;
+    } else if (mode === "bus") {
+        resultInsight.textContent = `Openbaar vervoer spreidt de impact over veel reizigers, waardoor de uitstoot per persoon vaak lager ligt dan bij solo rijden.`;
+        comparisonText.textContent = `Vergeleken met alleen rijden bespaar je ongeveer ${formatEuro(autoCost - totalCost)} en ${formatKg(autoCO2 - totalCO2)} over deze periode.`;
+    } else if (mode === "fiets") {
+        resultInsight.textContent = `Voor dit traject is fietsen bijna de lichtste optie: nauwelijks directe uitstoot en een zeer lage kost.`;
+        comparisonText.textContent = `Vergeleken met alleen rijden bespaar je ongeveer ${formatEuro(autoCost - totalCost)} en ${formatKg(autoCO2 - totalCO2)} over deze periode.`;
+    }
+}
+
+[distanceRange, daysRange, weeksRange, transportMode].forEach((element) => {
+    element?.addEventListener("input", updateSimulator);
 });
+
+updateSimulator();

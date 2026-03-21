@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bedankt voor je deelname</title>
+    <link rel="stylesheet" href="/css/survey-thankyou.css">
+</head>
+<body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <main class="thanks-page">
+        <section class="thanks-card">
+            <div class="thanks-icon">✓</div>
+            <span class="thanks-badge">Antwoorden opgeslagen</span>
+
+            <h1>Bedankt voor je deelname</h1>
+            <p>
+                Je antwoorden zijn succesvol opgeslagen. Daarmee help je ons om beter te begrijpen
+                of een carpoolplatform op de campus echt een meerwaarde kan bieden.
+            </p>
+
+            <div class="countdown-wrap">
+                <div class="countdown-circle">
+                    <span id="countdownValue">10</span>
+                </div>
+                <p>Je wordt automatisch doorgestuurd naar de homepage.</p>
+            </div>
+
+            <div class="thanks-actions">
+                <a href="/" class="btn-home">Nu naar homepage</a>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let secondsLeft = 10;
+        const countdownValue = document.getElementById("countdownValue");
+
+        const interval = setInterval(() => {
+            secondsLeft--;
+            countdownValue.textContent = secondsLeft;
+
+            if (secondsLeft <= 0) {
+                clearInterval(interval);
+                window.location.href = "/";
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
