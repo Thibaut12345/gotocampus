@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard login</title>
+    <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+<body class="dashboard-login-body">
+    <main class="login-shell">
+        <section class="login-card glass-card">
+            <div class="login-badge">Beveiligd dashboard</div>
+            <h1>Inloggen</h1>
+            <p class="login-subtext">
+                Meld je aan om de resultaten van de mobiliteitsbevraging te bekijken.
+            </p>
+
+            <% if (error) { %>
+                <div class="login-error"><%= error %></div>
+            <% } %>
+
+            <form method="POST" action="/dashboard/login" class="login-form">
+                <div class="field">
+                    <label for="username">Gebruikersnaam</label>
+                    <input id="username" name="username" type="text" required autocomplete="username" />
+                </div>
+
+                <div class="field">
+                    <label for="password">Wachtwoord</label>
+                    <input id="password" name="password" type="password" required autocomplete="current-password" />
+                </div>
+
+                <button class="primary-btn" type="submit">Inloggen</button>
+            </form>
+
+            <div class="login-hint">
+                Alleen geautoriseerde toegang.
+            </div>
+        </section>
+    </main>
+</body>
+</html>

@@ -12,148 +12,310 @@ const progressSubtext = document.getElementById("progressSubtext");
 const heroInsightTitle = document.getElementById("heroInsightTitle");
 const heroInsightText = document.getElementById("heroInsightText");
 
-const STORAGE_KEY = "campus_mobility_survey_v3";
+const STORAGE_KEY = "campus_mobility_survey_v6";
 
 const savedState = loadSavedState();
 const answers = savedState.answers || {};
 let history = savedState.history || [];
-let currentQuestionId = savedState.currentQuestionId || "role";
+let currentQuestionId = savedState.currentQuestionId || "email";
 let isSubmitting = false;
 
 const iconMap = {
     "Student": "🎓",
     "Personeel": "💼",
     "Overig": "👤",
+
+    "Odisee": "🏫",
+    "KU Leuven": "🎓",
+    "LUCA": "🎨",
+    "Andere": "✨",
+
     "1": "1️⃣",
     "2": "2️⃣",
     "3": "3️⃣",
     "4": "4️⃣",
     "5+": "5️⃣",
+
     "Auto": "🚗",
     "Openbaar vervoer": "🚌",
     "Fiets": "🚲",
     "Te voet": "🚶",
     "Anders": "✨",
+
     "Ja": "👍",
     "Nee": "👎",
     "Misschien": "🤔",
-    "Altijd": "🔥",
-    "Vaak": "✅",
-    "Soms": "🔁",
-    "Zelden": "🌙",
+
     "Nooit": "🚫",
+    "Af en toe": "🔁",
+    "Regelmatig": "✅",
+    "Bijna altijd": "🔥",
+    "Altijd": "💯",
+    "Meestal": "📍",
+
+    "Dagelijks of bijna altijd": "🅿️",
+    "2 à 3 keer per week": "📅",
+    "1 keer per week": "🗓️",
+    "Bijna nooit": "🌙",
+
     "Zeer tevreden": "😄",
     "Tevreden": "🙂",
     "Neutraal": "😐",
     "Ontevreden": "🙁",
     "Zeer ontevreden": "😣",
+
     "Lagere kost": "💶",
     "Minder uitstoot": "🌱",
     "Gezelliger": "👥",
     "Makkelijker parkeren": "🅿️",
     "Tijdswinst": "⏱️",
     "Andere reden": "✍️",
+
     "Enkel met studenten": "🧑‍🎓",
+    "Enkel met personeel": "🧑‍💼",
+    "Zowel studenten als personeel": "👥",
     "Maakt mij niet uit": "🤷",
+
     "Betrouwbaarheid": "🕒",
     "Veiligheid": "🛡️",
     "Flexibiliteit": "🧭",
     "Zeker zijn van rit terug": "🔁",
-    "Moeilijk te combineren met planning": "📅",
+
+    "Eigen flexibiliteit behouden": "🧍",
+    "Wisselende les- of werkroosters": "📅",
+    "Geen goede match met anderen": "📍",
     "Liever onafhankelijk": "🧍",
     "Onvoldoende vertrouwen": "🔒",
-    "Te weinig mensen uit mijn buurt": "📍"
+    "Te weinig mensen uit mijn buurt": "📌",
+
+    "Onvoldoende parking": "🅿️",
+    "Afstand is haalbaar zonder auto": "📏",
+    "File / verkeer": "🚦",
+    "Openbaar vervoer is vlot": "🚌",
+    "Financiële redenen": "💶",
+    "Ik heb geen auto": "🚫",
+    "Ik heb geen rijbewijs": "🪪",
+    "Gezondheid / beweging": "🏃",
+    "Duurzaamheid": "🌱",
+
+    "Ik wacht en probeer opnieuw": "⏳",
+    "Ik zoek verder buiten de campus": "🔍",
+    "Ik parkeer op een betalende plaats": "💳",
+    "Ik parkeer fout": "⚠️",
+    "Ik wijzig mijn plan / keer terug": "↩️",
+
+    "Toch met de fiets": "🚲",
+    "Met het openbaar vervoer": "🚌",
+    "Met de wagen": "🚗",
+    "Ik kom dan meestal niet": "🏠",
+
+    "Helemaal niet": "🚫",
+    "Beperkt": "▫️",
+    "Matig": "◽",
+    "Sterk": "📈",
+    "Zeer sterk": "🔥",
+
+    "Bijna niet flexibel": "⏰",
+    "Beperkt flexibel": "🗓️",
+    "Redelijk flexibel": "🔄",
+    "Heel flexibel": "✨",
+
+    "Meestal vast": "📌",
+    "Deels wisselend": "🔄",
+    "Sterk wisselend": "🌪️",
+
+    "Voor 8u": "🌅",
+    "8u - 9u": "🕗",
+    "9u - 10u": "🕘",
+    "Na 10u": "☀️",
+    "Voor 16u": "🕓",
+    "16u - 17u": "🕔",
+    "17u - 18u": "🕕",
+    "Na 18u": "🌙",
+
+    "1 dag per week": "1️⃣",
+    "2 dagen per week": "2️⃣",
+    "3 dagen per week": "3️⃣",
+    "4 of meer dagen per week": "4️⃣",
+
+    "Liefst bestuurder": "🚗",
+    "Liefst passagier": "🪑",
+    "Beide zijn oké": "🔄",
+    "Weet ik nog niet": "🤔"
 };
 
+const NON_CAR_REASON_OPTIONS = [
+    "Onvoldoende parking",
+    "Afstand is haalbaar zonder auto",
+    "File / verkeer",
+    "Openbaar vervoer is vlot",
+    "Financiële redenen",
+    "Ik heb geen auto",
+    "Ik heb geen rijbewijs",
+    "Gezondheid / beweging",
+    "Duurzaamheid",
+    "Andere reden"
+];
+
 const questions = {
+    email: {
+        label: "Wat is je e-mailadres?",
+        help: "Dit is verplicht zodat dezelfde persoon de vragenlijst niet meerdere keren kan invullen. Als dit e-mailadres al gebruikt werd, krijg je meteen een melding.",
+        type: "input",
+        inputType: "email",
+        placeholder: "jouwmail@voorbeeld.be",
+        required: true,
+        next: () => "role"
+    },
+
     role: {
         label: "Ben je student, personeel of overig?",
-        help: "Zo kunnen we later beter analyseren welke groepen het vaakst naar de campus komen.",
+        help: "Zo kunnen we de resultaten beter analyseren per doelgroep.",
         type: "choice",
         options: [
             { value: "Student", subtext: "Je volgt les of studeert op de campus." },
             { value: "Personeel", subtext: "Je werkt op of voor de campus." },
             { value: "Overig", subtext: "Bezoeker, extern, stagiair of andere situatie." }
         ],
+        next: () => "institution"
+    },
+
+    institution: {
+        label: "Aan welke hogeschool of instelling ben je vooral verbonden?",
+        help: "Zo kunnen we zien of mobiliteit verschilt tussen de verschillende instellingen op en rond de campus.",
+        type: "choice",
+        options: ["Odisee", "KU Leuven", "LUCA", "Andere"],
+        next: () => "originArea"
+    },
+
+    originArea: {
+        label: "Vanuit welke gemeente of postcode vertrek je meestal?",
+        help: "Een postcode is voldoende. Zo kunnen we zien of er geografische clusters zijn voor carpoolen.",
+        type: "input",
+        inputType: "number",
+        placeholder: "Bijvoorbeeld 9000",
         next: () => "campusDays"
     },
 
     campusDays: {
         label: "Hoeveel dagen per week kom je meestal naar de campus?",
-        help: "Kies wat het dichtst bij jouw gemiddelde ligt.",
+        help: "Kies wat het best bij jouw normale week past.",
         type: "choice",
         options: ["1", "2", "3", "4", "5+"],
+        next: () => "scheduleType"
+    },
+
+    scheduleType: {
+        label: "Is jouw les- of werkrooster meestal vast of wisselend?",
+        help: "Dit helpt ons inschatten hoe haalbaar vaste carpoolafspraken zijn.",
+        type: "choice",
+        options: ["Meestal vast", "Deels wisselend", "Sterk wisselend"],
+        next: () => "departureWindowMorning"
+    },
+
+    departureWindowMorning: {
+        label: "Rond welk uur vertrek je meestal naar de campus?",
+        help: "Een tijdsvenster is genoeg. Zo kunnen we kijken of mensen qua timing overlappen.",
+        type: "choice",
+        options: ["Voor 8u", "8u - 9u", "9u - 10u", "Na 10u"],
+        next: () => "departureWindowEvening"
+    },
+
+    departureWindowEvening: {
+        label: "Rond welk uur vertrek je meestal terug van de campus?",
+        help: "Ook dit helpt om de haalbaarheid van matches in te schatten.",
+        type: "choice",
+        options: ["Voor 16u", "16u - 17u", "17u - 18u", "Na 18u"],
         next: () => "transport"
     },
 
     transport: {
         label: "Met welk vervoersmiddel kom je meestal naar de campus?",
-        help: "We tonen daarna enkel vragen die voor jouw situatie relevant zijn.",
+        help: "Daarna krijg je enkel de relevante vervolgvragen.",
         type: "choice",
         options: [
             { value: "Auto", subtext: "Je rijdt meestal met de wagen naar de campus." },
             { value: "Openbaar vervoer", subtext: "Bus, trein, tram of combinatie." },
             { value: "Fiets", subtext: "Gewone fiets of elektrische fiets." },
             { value: "Te voet", subtext: "Je woont op wandelafstand." },
-            { value: "Anders", subtext: "Bijvoorbeeld brommer, step of andere mix." }
+            { value: "Anders", subtext: "Bijvoorbeeld brommer, step of combinatie." }
         ],
         next: (value) => {
-            if (value === "Auto") return "distance";
-            if (value === "Openbaar vervoer") return "ovSatisfaction";
+            if (value === "Auto") return "carDistance";
+            if (value === "Openbaar vervoer") return "ovHomeDistance";
             if (value === "Fiets") return "bikeDistance";
             if (value === "Te voet") return "walkTime";
             return "otherTransport";
         }
     },
 
-    distance: {
+    carDistance: {
         label: "Van hoe ver kom je ongeveer naar de campus?",
-        help: "Geef een schatting in kilometer.",
+        help: "Geef een ruwe schatting in kilometer.",
         type: "input",
         inputType: "number",
         placeholder: "Bijvoorbeeld 18",
-        next: () => "drivesAlone"
-    },
-
-    drivesAlone: {
-        label: "Rijd je meestal alleen met de auto?",
-        help: "Dit helpt ons om het potentieel voor carpoolen in te schatten.",
-        type: "choice",
-        options: [
-            { value: "Ja", subtext: "Meestal alleen in de wagen." },
-            { value: "Nee", subtext: "Ik rij vaak al samen met iemand." }
-        ],
-        next: (value) => value === "Ja" ? "parkingStress" : "carpoolFrequency"
-    },
-
-    parkingStress: {
-        label: "Is parkeren op of rond de campus soms lastig voor jou?",
-        help: "Ook parkeerdruk kan een reden zijn waarom carpoolen aantrekkelijker wordt.",
-        type: "choice",
-        options: ["Ja", "Misschien", "Nee"],
-        next: () => "openToCarpool"
+        next: () => "carpoolFrequency"
     },
 
     carpoolFrequency: {
         label: "Hoe vaak carpool je momenteel al?",
-        help: "Zelfs occasioneel carpoolen is voor ons interessante data.",
+        help: "Zo krijgen we een beter beeld dan met een simpele ja/nee-vraag.",
         type: "choice",
-        options: ["Altijd", "Vaak", "Soms", "Zelden"],
-        next: () => "freeSeats"
+        options: ["Nooit", "Af en toe", "Regelmatig", "Bijna altijd", "Altijd"],
+        next: () => "carOccupancy"
     },
 
-    freeSeats: {
+    carOccupancy: {
         label: "Met hoeveel personen zit je meestal in de auto?",
-        help: "Een schatting is voldoende.",
+        help: "Tel jezelf mee. Een schatting is voldoende.",
         type: "input",
         inputType: "number",
         placeholder: "Bijvoorbeeld 2",
+        next: () => "parkingProblemFrequency"
+    },
+
+    parkingProblemFrequency: {
+        label: "Hoe vaak ervaar je parkeerproblemen op of rond de campus?",
+        help: "Denk aan volzet zijn, lang moeten zoeken of stress om nog een plaats te vinden.",
+        type: "choice",
+        options: [
+            "Dagelijks of bijna altijd",
+            "2 à 3 keer per week",
+            "1 keer per week",
+            "Regelmatig",
+            "Af en toe",
+            "Bijna nooit"
+        ],
+        next: () => "parkingIfFull"
+    },
+
+    parkingIfFull: {
+        label: "Wat doe je meestal als de parking vol is?",
+        help: "Je mag meerdere opties aanduiden als dit afhangt van de situatie.",
+        type: "multiChoice",
+        options: [
+            "Ik wacht en probeer opnieuw",
+            "Ik zoek verder buiten de campus",
+            "Ik parkeer op een betalende plaats",
+            "Ik parkeer fout",
+            "Ik wijzig mijn plan / keer terug",
+            "Andere reden"
+        ],
+        next: () => "wrongParkingFrequency"
+    },
+
+    wrongParkingFrequency: {
+        label: "Hoe vaak parkeer je fout omdat je geen plaats vindt?",
+        help: "Dit helpt ons inschatten hoe groot de druk echt is.",
+        type: "choice",
+        options: ["Nooit", "Af en toe", "Regelmatig", "Meestal"],
         next: () => "openToCarpool"
     },
 
     openToCarpool: {
-        label: "Zou je openstaan om vaker te carpoolen?",
-        help: "We willen vooral weten of er bereidheid is, ook als dat vandaag nog niet gebeurt.",
+        label: "Zou je openstaan om vaker te carpoolen als dit praktisch en betrouwbaar geregeld is?",
+        help: "We willen weten of de bereidheid er is, zelfs als je het vandaag nog niet veel doet.",
         type: "choice",
         options: ["Ja", "Misschien", "Nee"],
         next: (value) => {
@@ -163,32 +325,98 @@ const questions = {
     },
 
     carpoolReason: {
-        label: "Wat zou voor jou de grootste motivatie zijn om te carpoolen?",
-        help: "Kies de reden die voor jou het zwaarst doorweegt.",
+        label: "Wat zou voor jou de belangrijkste motivatie zijn om meer te carpoolen?",
+        help: "Kies wat voor jou het zwaarst doorweegt.",
         type: "choice",
         options: ["Lagere kost", "Minder uitstoot", "Gezelliger", "Makkelijker parkeren", "Tijdswinst", "Andere reden"],
+        next: () => "realisticCarpoolDays"
+    },
+
+    carpoolBarrier: {
+        label: "Wat houdt je het meest tegen om te carpoolen?",
+        help: "Je mag meerdere drempels aanduiden als er meer dan één meespeelt.",
+        type: "multiChoice",
+        options: [
+            "Eigen flexibiliteit behouden",
+            "Wisselende les- of werkroosters",
+            "Geen goede match met anderen",
+            "Liever onafhankelijk",
+            "Onvoldoende vertrouwen",
+            "Te weinig mensen uit mijn buurt",
+            "Zeker zijn van rit terug"
+        ],
+        next: () => "realisticCarpoolDays"
+    },
+
+    realisticCarpoolDays: {
+        label: "Op hoeveel campusdagen per week zou carpoolen voor jou realistisch kunnen zijn?",
+        help: "Zo meten we niet alleen interesse, maar ook praktische haalbaarheid.",
+        type: "choice",
+        options: ["Nooit", "1 dag per week", "2 dagen per week", "3 dagen per week", "4 of meer dagen per week"],
+        next: () => "departureFlexibility"
+    },
+
+    departureFlexibility: {
+        label: "Hoe flexibel zijn jouw vertrek- en aankomsturen meestal?",
+        help: "Dit is belangrijk om te weten of ritten makkelijk combineerbaar zijn.",
+        type: "choice",
+        options: ["Bijna niet flexibel", "Beperkt flexibel", "Redelijk flexibel", "Heel flexibel"],
+        next: () => "carpoolRolePreference"
+    },
+
+    carpoolRolePreference: {
+        label: "Welke rol zou jij het liefst opnemen bij carpoolen?",
+        help: "Dit helpt ons inschatten of er genoeg mogelijke bestuurders én passagiers zijn.",
+        type: "choice",
+        options: ["Liefst bestuurder", "Liefst passagier", "Beide zijn oké", "Weet ik nog niet"],
         next: () => "matchingPreference"
     },
 
     matchingPreference: {
         label: "Wat is voor jou het belangrijkst bij een goed carpoolplatform?",
-        help: "Zo begrijpen we welke functies het meeste vertrouwen en gebruik kunnen creëren.",
+        help: "Zo zien we welke functies het meeste vertrouwen en gebruik kunnen creëren.",
         type: "choice",
         options: ["Betrouwbaarheid", "Veiligheid", "Flexibiliteit", "Zeker zijn van rit terug"],
-        next: () => "ovToCarpoolStudent"
+        next: () => "carpoolPartnerPreference"
     },
 
-    carpoolBarrier: {
-        label: "Wat houdt je het meest tegen om te carpoolen?",
-        help: "Kies wat voor jou de grootste drempel is.",
+    carpoolPartnerPreference: {
+        label: "Met wie zou je liefst carpoolen?",
+        help: "Omdat we zowel studenten als personeel willen kunnen bevragen, is deze nuance nuttig.",
         type: "choice",
         options: [
-            "Moeilijk te combineren met planning",
-            "Liever onafhankelijk",
-            "Onvoldoende vertrouwen",
-            "Te weinig mensen uit mijn buurt"
+            "Enkel met studenten",
+            "Enkel met personeel",
+            "Zowel studenten als personeel",
+            "Maakt mij niet uit"
         ],
-        next: () => "sustainabilityPriority"
+        next: () => "parkingCampusOpinion"
+    },
+
+    ovHomeDistance: {
+        label: "Wat is de afstand van thuis of kot tot de campus?",
+        help: "Geef een ruwe schatting in kilometer.",
+        type: "input",
+        inputType: "number",
+        placeholder: "Bijvoorbeeld 14",
+        next: () => "ovTravelTime"
+    },
+
+    ovTravelTime: {
+        label: "Hoe lang duurt een enkel traject met het openbaar vervoer gemiddeld?",
+        help: "Vul het aantal minuten in.",
+        type: "input",
+        inputType: "number",
+        placeholder: "Bijvoorbeeld 35",
+        next: () => "ovReasonNotCar"
+    },
+
+    ovReasonNotCar: {
+        label: "Waarom kom je meestal niet met de auto, maar met het openbaar vervoer?",
+        help: "Je mag meerdere redenen aanduiden.",
+        type: "multiChoice",
+        options: NON_CAR_REASON_OPTIONS,
+        next: () => "ovSatisfaction"
     },
 
     ovSatisfaction: {
@@ -196,26 +424,38 @@ const questions = {
         help: "Denk aan betrouwbaarheid, reistijd en comfort.",
         type: "choice",
         options: ["Zeer tevreden", "Tevreden", "Neutraal", "Ontevreden", "Zeer ontevreden"],
+        next: () => "ovConsiderCar"
+    },
+
+    ovConsiderCar: {
+        label: "Zou je ooit overwegen om met de auto naar de campus te komen?",
+        help: "We willen eerst weten of de auto voor jou überhaupt een realistisch alternatief is.",
+        type: "choice",
+        options: ["Ja", "Misschien", "Nee"],
+        next: (value) => {
+            if (value === "Ja" || value === "Misschien") return "ovCarReason";
+            return "parkingCampusOpinion";
+        }
+    },
+
+    ovCarReason: {
+        label: "In welke situatie zou je wél met de auto naar de campus komen?",
+        help: "Bijvoorbeeld bij slechte verbindingen, tijdsdruk, stakingen, slecht weer, ...",
+        type: "textarea",
+        placeholder: "Typ hier kort wanneer of waarom je wel met de auto zou komen",
+        required: false,
         next: () => "ovToCarpool"
     },
 
     ovToCarpool: {
-        label: "Zou je carpool overwegen als het praktisch en veilig geregeld is?",
-        help: "Bijvoorbeeld als routes en tijdstippen makkelijk op elkaar afgestemd worden.",
+        label: "Als je met de auto naar de campus zou komen, zou je dan carpool overwegen?",
+        help: "Pas nadat de auto een optie is, is deze vraag echt relevant.",
         type: "choice",
         options: ["Ja", "Misschien", "Nee"],
         next: (value) => {
-            if (value === "Ja" || value === "Misschien") return "ovToCarpoolStudent";
-            return "sustainabilityPriority";
+            if (value === "Ja" || value === "Misschien") return "realisticCarpoolDaysNonCar";
+            return "parkingCampusOpinion";
         }
-    },
-
-    ovToCarpoolStudent: {
-        label: "Met wie zou je liefst carpoolen?",
-        help: "Dit helpt om te begrijpen hoe belangrijk herkenbaarheid of doelgroep is.",
-        type: "choice",
-        options: ["Enkel met studenten", "Maakt mij niet uit"],
-        next: () => "sustainabilityPriority"
     },
 
     bikeDistance: {
@@ -224,17 +464,58 @@ const questions = {
         type: "input",
         inputType: "number",
         placeholder: "Bijvoorbeeld 6",
-        next: () => "bikeSwitch"
+        next: () => "bikeReasonNotCar"
     },
 
-    bikeSwitch: {
-        label: "Zou je bij slecht weer of een langere afstand soms carpool overwegen?",
-        help: "Zelfs een occasionele overstap is nuttige info voor ons onderzoek.",
+    bikeReasonNotCar: {
+        label: "Waarom kom je meestal niet met de auto, maar met de fiets?",
+        help: "Je mag meerdere redenen aanduiden.",
+        type: "multiChoice",
+        options: NON_CAR_REASON_OPTIONS,
+        next: () => "bikeBadWeather"
+    },
+
+    bikeBadWeather: {
+        label: "Bij slecht weer kom ik meestal ...",
+        help: "Dit helpt ons zien of slecht weer mensen richting auto duwt.",
+        type: "choice",
+        options: [
+            "Toch met de fiets",
+            "Met het openbaar vervoer",
+            "Met de wagen",
+            "Ik kom dan meestal niet"
+        ],
+        next: () => "bikeConsiderCar"
+    },
+
+    bikeConsiderCar: {
+        label: "Zou je ooit overwegen om met de auto naar de campus te komen?",
+        help: "We willen eerst weten of de auto voor jou een realistisch alternatief is.",
         type: "choice",
         options: ["Ja", "Misschien", "Nee"],
         next: (value) => {
-            if (value === "Ja" || value === "Misschien") return "ovToCarpoolStudent";
-            return "sustainabilityPriority";
+            if (value === "Ja" || value === "Misschien") return "bikeCarReason";
+            return "parkingCampusOpinion";
+        }
+    },
+
+    bikeCarReason: {
+        label: "In welke situatie zou je wél met de auto naar de campus komen?",
+        help: "Bijvoorbeeld slecht weer, een zwaardere dag, materiaal meenemen, tijdsdruk, ...",
+        type: "textarea",
+        placeholder: "Typ hier kort wanneer of waarom je wel met de auto zou komen",
+        required: false,
+        next: () => "bikeToCarpool"
+    },
+
+    bikeToCarpool: {
+        label: "Als je met de auto naar de campus zou komen, zou je dan carpool overwegen?",
+        help: "Pas nadat de auto een optie is, is deze vraag echt relevant.",
+        type: "choice",
+        options: ["Ja", "Misschien", "Nee"],
+        next: (value) => {
+            if (value === "Ja" || value === "Misschien") return "realisticCarpoolDaysNonCar";
+            return "parkingCampusOpinion";
         }
     },
 
@@ -244,17 +525,45 @@ const questions = {
         type: "input",
         inputType: "number",
         placeholder: "Bijvoorbeeld 12",
-        next: () => "walkSwitch"
+        next: () => "walkReasonNotCar"
     },
 
-    walkSwitch: {
-        label: "Zou je voor een verdere campuslocatie ooit carpool overwegen?",
-        help: "Voor korte afstanden is dat vaak niet relevant, maar voor andere locaties misschien wel.",
+    walkReasonNotCar: {
+        label: "Waarom kom je meestal niet met de auto, maar te voet?",
+        help: "Je mag meerdere redenen aanduiden.",
+        type: "multiChoice",
+        options: NON_CAR_REASON_OPTIONS,
+        next: () => "walkConsiderCar"
+    },
+
+    walkConsiderCar: {
+        label: "Zou je ooit overwegen om met de auto naar de campus te komen?",
+        help: "We willen eerst weten of de auto voor jou een realistisch alternatief is.",
         type: "choice",
         options: ["Ja", "Misschien", "Nee"],
         next: (value) => {
-            if (value === "Ja" || value === "Misschien") return "ovToCarpoolStudent";
-            return "sustainabilityPriority";
+            if (value === "Ja" || value === "Misschien") return "walkCarReason";
+            return "parkingCampusOpinion";
+        }
+    },
+
+    walkCarReason: {
+        label: "In welke situatie zou je wél met de auto naar de campus komen?",
+        help: "Bijvoorbeeld bij een andere campuslocatie, tijdsdruk, slecht weer, materiaal meenemen, ...",
+        type: "textarea",
+        placeholder: "Typ hier kort wanneer of waarom je wel met de auto zou komen",
+        required: false,
+        next: () => "walkToCarpool"
+    },
+
+    walkToCarpool: {
+        label: "Als je met de auto naar de campus zou komen, zou je dan carpool overwegen?",
+        help: "Pas nadat de auto een optie is, is deze vraag echt relevant.",
+        type: "choice",
+        options: ["Ja", "Misschien", "Nee"],
+        next: (value) => {
+            if (value === "Ja" || value === "Misschien") return "realisticCarpoolDaysNonCar";
+            return "parkingCampusOpinion";
         }
     },
 
@@ -264,12 +573,75 @@ const questions = {
         type: "input",
         inputType: "text",
         placeholder: "Typ hier je vervoersmiddel",
+        next: () => "otherReasonNotCar"
+    },
+
+    otherReasonNotCar: {
+        label: "Waarom kom je meestal niet met de auto, maar met dit vervoersmiddel?",
+        help: "Je mag meerdere redenen aanduiden.",
+        type: "multiChoice",
+        options: NON_CAR_REASON_OPTIONS,
+        next: () => "otherConsiderCar"
+    },
+
+    otherConsiderCar: {
+        label: "Zou je ooit overwegen om met de auto naar de campus te komen?",
+        help: "We willen eerst weten of de auto voor jou een realistisch alternatief is.",
+        type: "choice",
+        options: ["Ja", "Misschien", "Nee"],
+        next: (value) => {
+            if (value === "Ja" || value === "Misschien") return "otherCarReason";
+            return "parkingCampusOpinion";
+        }
+    },
+
+    otherCarReason: {
+        label: "In welke situatie zou je wél met de auto naar de campus komen?",
+        help: "Bijvoorbeeld slecht weer, tijdsdruk, comfort, langere afstand, ...",
+        type: "textarea",
+        placeholder: "Typ hier kort wanneer of waarom je wel met de auto zou komen",
+        required: false,
+        next: () => "otherToCarpool"
+    },
+
+    otherToCarpool: {
+        label: "Als je met de auto naar de campus zou komen, zou je dan carpool overwegen?",
+        help: "Pas nadat de auto een optie is, is deze vraag echt relevant.",
+        type: "choice",
+        options: ["Ja", "Misschien", "Nee"],
+        next: (value) => {
+            if (value === "Ja" || value === "Misschien") return "realisticCarpoolDaysNonCar";
+            return "parkingCampusOpinion";
+        }
+    },
+
+    realisticCarpoolDaysNonCar: {
+        label: "Op hoeveel campusdagen per week zou carpoolen voor jou realistisch kunnen zijn?",
+        help: "Zo meten we niet alleen interesse, maar ook praktische haalbaarheid.",
+        type: "choice",
+        options: ["Nooit", "1 dag per week", "2 dagen per week", "3 dagen per week", "4 of meer dagen per week"],
+        next: () => "carpoolRolePreferenceNonCar"
+    },
+
+    carpoolRolePreferenceNonCar: {
+        label: "Welke rol zou jij het liefst opnemen bij carpoolen?",
+        help: "Dit helpt ons inschatten of er genoeg mogelijke bestuurders én passagiers zijn.",
+        type: "choice",
+        options: ["Liefst bestuurder", "Liefst passagier", "Beide zijn oké", "Weet ik nog niet"],
+        next: () => "carpoolPartnerPreference"
+    },
+
+    parkingCampusOpinion: {
+        label: "Denk je dat parkeerproblemen op of rond de campus een belangrijk mobiliteitsprobleem zijn?",
+        help: "Ook als je zelf niet met de auto komt, is jouw inschatting interessant.",
+        type: "choice",
+        options: ["Ja", "Misschien", "Nee"],
         next: () => "sustainabilityPriority"
     },
 
     sustainabilityPriority: {
         label: "Hoe belangrijk vind jij duurzaamheid bij je keuze van vervoer?",
-        help: "Sleep de knop of klik op een niveau dat het best past bij jouw gevoel.",
+        help: "Kies het niveau dat het best bij jouw gevoel past.",
         type: "range",
         min: 1,
         max: 4,
@@ -284,7 +656,7 @@ const questions = {
 
     sustainabilityOpinion: {
         label: "Denk je dat een carpoolplatform nuttig zou zijn voor deze campus?",
-        help: "Je mag hier puur je eigen gevoel volgen.",
+        help: "Volg hier gewoon je eigen inschatting.",
         type: "choice",
         options: ["Ja", "Misschien", "Nee"],
         next: () => "motivation"
@@ -292,34 +664,32 @@ const questions = {
 
     motivation: {
         label: "Waarom denk je dat dit wel of niet nuttig zou zijn?",
-        help: "Hier kan je kort je mening of ervaring delen.",
+        help: "Hier mag je kort je mening of ervaring geven.",
         type: "textarea",
-        placeholder: "Bijvoorbeeld: veel studenten komen uit dezelfde regio, parking is lastig, OV sluit niet goed aan, ...",
+        placeholder: "Bijvoorbeeld: veel studenten komen uit dezelfde regio, parkeerdruk is hoog, OV sluit niet goed aan, roosters verschillen sterk, ...",
         required: false,
+        next: () => "pilotContactPermission"
+    },
+
+    pilotContactPermission: {
+        label: "Mogen we je later contacteren op dit e-mailadres als we een proefproject of testfase rond carpoolen opstarten?",
+        help: "Dit is volledig vrijblijvend, maar kan nuttig zijn als jullie interesse later willen omzetten in een echte test.",
+        type: "choice",
+        options: ["Ja", "Nee"],
         next: () => "existingPlatform"
     },
 
     existingPlatform: {
         label: "Wist je dat er vandaag al een initiatief bestaat?",
-        help: "Deze info geven we hier pas op het einde mee zodat je antwoorden niet beïnvloed worden.",
+        help: "Deze info geven we pas op het einde mee zodat je antwoorden niet beïnvloed worden.",
         type: "info",
         content: "Voor wie nu al wil starten: op <a href='https://www.carpool.be' target='_blank' rel='noopener noreferrer'>carpool.be</a> kun je vandaag al ritten zoeken of aanbieden.",
-        next: () => "email"
-    },
-
-    email: {
-        label: "Wil je je e-mailadres achterlaten voor verdere opvolging of resultaten?",
-        help: "Dit is volledig optioneel. We gebruiken dit enkel om je eventueel te contacteren over de resultaten of een testfase.",
-        type: "input",
-        inputType: "email",
-        placeholder: "jouwmail@voorbeeld.be",
-        required: false,
         next: () => "summary"
     },
 
     summary: {
         label: "Klaar! Kijk nog even je antwoorden na.",
-        help: "Je kan hieronder onmiddellijk verzenden of nog iets aanpassen.",
+        help: "Je kan hieronder meteen verzenden of nog iets aanpassen.",
         type: "summary",
         next: () => "done"
     }
@@ -346,9 +716,17 @@ function clearState() {
     localStorage.removeItem(STORAGE_KEY);
 }
 
+function normalizeEmail(value) {
+    return String(value || "").trim().toLowerCase();
+}
+
 function normalizeAnswerForDisplay(questionId, value) {
     const question = questions[questionId];
     if (!question) return value;
+
+    if (Array.isArray(value)) {
+        return value.length ? value.join(", ") : "-";
+    }
 
     if (question.type === "range") {
         return question.valueLabels?.[value] || value;
@@ -365,19 +743,30 @@ function getOptionSubtext(option) {
     return typeof option === "string" ? "" : (option.subtext || "");
 }
 
+function isEmptyValue(value) {
+    if (Array.isArray(value)) return value.length === 0;
+    return value === undefined || value === null || value === "";
+}
+
+function valuesEqual(a, b) {
+    return JSON.stringify(a) === JSON.stringify(b);
+}
+
 function getPredictedTotalSteps() {
     const simulatedAnswers = { ...answers };
     const currentLiveValue = getCurrentValue(false);
 
-    if (currentLiveValue !== "") {
-        simulatedAnswers[currentQuestionId] = currentLiveValue;
+    if (!isEmptyValue(currentLiveValue)) {
+        simulatedAnswers[currentQuestionId] = currentQuestionId === "email"
+            ? normalizeEmail(currentLiveValue)
+            : currentLiveValue;
     }
 
-    let qid = "role";
+    let qid = "email";
     let count = 0;
     let guard = 0;
 
-    while (qid && qid !== "done" && guard < 100) {
+    while (qid && qid !== "done" && guard < 200) {
         guard++;
         count++;
 
@@ -398,10 +787,10 @@ function getPredictedTotalSteps() {
 
 function buildFinalPath() {
     const path = [];
-    let qid = "role";
+    let qid = "email";
     let guard = 0;
 
-    while (qid && qid !== "done" && guard < 100) {
+    while (qid && qid !== "done" && guard < 200) {
         guard++;
         path.push(qid);
 
@@ -421,28 +810,34 @@ function renderQuestion(questionId) {
     if (!question) return;
 
     let html = `<div class="question-block">`;
-    html += `<div class="question-kicker">Slimme bevraging</div>`;
     html += `<div class="question-label">${question.label}</div>`;
 
     if (question.help) {
         html += `<p class="question-help">${question.help}</p>`;
     }
 
-    if (question.type === "choice") {
+    if (question.type === "choice" || question.type === "multiChoice") {
+        const currentValue = question.type === "multiChoice"
+            ? (Array.isArray(answers[questionId]) ? answers[questionId] : [])
+            : answers[questionId];
+
         html += `<div class="choice-grid">`;
 
         question.options.forEach((option) => {
             const optionValue = getOptionValue(option);
             const optionSubtext = getOptionSubtext(option);
-            const selected = answers[questionId] === optionValue ? "selected" : "";
+            const selected = question.type === "multiChoice"
+                ? currentValue.includes(optionValue)
+                : currentValue === optionValue;
             const icon = iconMap[optionValue] || "•";
 
             html += `
                 <button
                     type="button"
-                    class="choice-card ${selected}"
+                    class="choice-card ${selected ? "selected" : ""}"
                     data-value="${escapeHtml(optionValue)}"
-                    aria-pressed="${answers[questionId] === optionValue ? "true" : "false"}"
+                    data-mode="${question.type === "multiChoice" ? "multiple" : "single"}"
+                    aria-pressed="${selected ? "true" : "false"}"
                 >
                     <div class="choice-icon">${icon}</div>
                     <div class="choice-text-wrap">
@@ -454,9 +849,15 @@ function renderQuestion(questionId) {
         });
 
         html += `</div>`;
+
+        if (question.type === "multiChoice") {
+            html += `<div class="input-hint">Je mag meerdere opties aanduiden.</div>`;
+        }
     }
 
     if (question.type === "input") {
+        const value = answers[questionId] || "";
+
         html += `
             <div class="input-wrap">
                 <input
@@ -465,9 +866,9 @@ function renderQuestion(questionId) {
                     name="question"
                     min="${question.inputType === "number" ? "0" : ""}"
                     step="${question.inputType === "number" ? "any" : ""}"
-                    value="${escapeHtml(answers[questionId] || "")}"
+                    value="${escapeHtml(value)}"
                     placeholder="${question.placeholder || ""}"
-                    autocomplete="off"
+                    autocomplete="${question.inputType === "email" ? "email" : "off"}"
                 >
                 ${question.inputType === "number" ? `<div class="input-hint">Gebruik enkel een positief getal.</div>` : ""}
             </div>
@@ -573,21 +974,33 @@ function bindChoiceCards() {
 
     cards.forEach((card) => {
         card.addEventListener("click", () => {
-            cards.forEach((c) => {
-                c.classList.remove("selected");
-                c.setAttribute("aria-pressed", "false");
-            });
+            const mode = card.dataset.mode;
 
-            card.classList.add("selected");
-            card.setAttribute("aria-pressed", "true");
+            if (mode === "multiple") {
+                const isSelected = card.classList.contains("selected");
+                card.classList.toggle("selected", !isSelected);
+                card.setAttribute("aria-pressed", String(!isSelected));
+            } else {
+                cards.forEach((c) => {
+                    if (c.dataset.mode === "single") {
+                        c.classList.remove("selected");
+                        c.setAttribute("aria-pressed", "false");
+                    }
+                });
+
+                card.classList.add("selected");
+                card.setAttribute("aria-pressed", "true");
+            }
 
             updateProgress();
             updateHeroInsight();
         });
 
-        card.addEventListener("dblclick", () => {
-            card.click();
-            nextBtn.click();
+        card.addEventListener("dblclick", async () => {
+            if (card.dataset.mode === "single") {
+                card.click();
+                await goToNextQuestion();
+            }
         });
     });
 }
@@ -616,8 +1029,8 @@ function bindLiveInputs() {
 }
 
 function bindRangeButtons() {
-    const rangeInput = document.querySelector('.range-input');
-    const rangeButtons = document.querySelectorAll('[data-range-value]');
+    const rangeInput = document.querySelector(".range-input");
+    const rangeButtons = document.querySelectorAll("[data-range-value]");
 
     if (!rangeInput || !rangeButtons.length) return;
 
@@ -636,7 +1049,7 @@ function updateRangeUI(value) {
     if (!question || question.type !== "range") return;
 
     const badge = document.getElementById("rangeValueBadge");
-    const labels = document.querySelectorAll('[data-range-value]');
+    const labels = document.querySelectorAll("[data-range-value]");
 
     if (badge) {
         badge.textContent = question.valueLabels[String(value)] || value;
@@ -655,6 +1068,11 @@ function getCurrentValue(trim = true) {
         return selected ? selected.dataset.value : "";
     }
 
+    if (question.type === "multiChoice") {
+        return Array.from(document.querySelectorAll(".choice-card.selected"))
+            .map((card) => card.dataset.value);
+    }
+
     if (question.type === "summary" || question.type === "info") {
         return "ok";
     }
@@ -662,7 +1080,13 @@ function getCurrentValue(trim = true) {
     const input = document.querySelector('[name="question"]');
     if (!input) return "";
 
-    return trim ? input.value.trim() : input.value;
+    const value = trim ? input.value.trim() : input.value;
+
+    if (currentQuestionId === "email") {
+        return normalizeEmail(value);
+    }
+
+    return value;
 }
 
 function validateEmail(value) {
@@ -683,9 +1107,11 @@ function validateCurrentQuestion() {
 
     showError("");
 
-    if (question.type !== "summary" && question.type !== "info" && isRequired && !value) {
-        showError("Vul eerst een antwoord in.");
-        return false;
+    if (question.type !== "summary" && question.type !== "info" && isRequired) {
+        if (isEmptyValue(value)) {
+            showError("Vul eerst een antwoord in.");
+            return false;
+        }
     }
 
     if (question.inputType === "number" && value !== "") {
@@ -718,7 +1144,7 @@ function updateButtons() {
     const nextQuestion = currentQuestion.next ? currentQuestion.next(currentValue) : "done";
     const isSkippable = currentQuestion.required === false;
 
-    skipBtn.classList.toggle("hidden", !isSkippable || currentQuestion.type === "summary");
+    skipBtn.classList.toggle("hidden", !isSkippable || currentQuestion.type === "summary" || currentQuestionId === "email");
 
     if (currentQuestionId === "summary" || nextQuestion === "done") {
         nextBtn.classList.add("hidden");
@@ -740,7 +1166,7 @@ function updateProgress() {
     progressText.textContent = `Stap ${currentStep} van ${totalSteps}`;
 
     if (currentStep === 1) {
-        progressSubtext.textContent = "Je bent net gestart";
+        progressSubtext.textContent = "Start met je e-mailadres";
     } else if (currentQuestionId === "summary") {
         progressSubtext.textContent = "Laatste controle voor verzenden";
     } else {
@@ -750,8 +1176,17 @@ function updateProgress() {
 
 function updateHeroInsight() {
     const transport = answers.transport || (currentQuestionId === "transport" ? getCurrentValue() : "");
-    const openness = answers.openToCarpool || answers.ovToCarpool || answers.bikeSwitch || answers.walkSwitch || "";
+    const openness =
+        answers.openToCarpool ||
+        answers.ovToCarpool ||
+        answers.bikeToCarpool ||
+        answers.walkToCarpool ||
+        answers.otherToCarpool ||
+        "";
     const sustainability = answers.sustainabilityPriority || (currentQuestionId === "sustainabilityPriority" ? getCurrentValue() : "");
+    const parkingProblems = answers.parkingProblemFrequency || "";
+    const parkingOpinion = answers.parkingCampusOpinion || "";
+    const scheduleType = answers.scheduleType || "";
 
     if (currentQuestionId === "summary") {
         heroInsightTitle.textContent = "Bedankt, jouw input maakt het verschil";
@@ -759,9 +1194,33 @@ function updateHeroInsight() {
         return;
     }
 
+    if (currentQuestionId === "email") {
+        heroInsightTitle.textContent = "Eerst even je deelname registreren";
+        heroInsightText.textContent = "Zo vermijden we dubbele inzendingen en blijft de dataset betrouwbaar.";
+        return;
+    }
+
+    if (scheduleType === "Meestal vast") {
+        heroInsightTitle.textContent = "Vaste roosters maken matching makkelijker";
+        heroInsightText.textContent = "Als veel respondenten vaste uren hebben, stijgt de kans dat een carpoolplatform ook praktisch bruikbaar wordt.";
+        return;
+    }
+
     if (transport === "Auto") {
         heroInsightTitle.textContent = "Autoverplaatsingen tonen het grootste carpoolpotentieel";
         heroInsightText.textContent = "Vooral ritten met vrije zitplaatsen kunnen een groot verschil maken voor parkeerdruk, kost en uitstoot.";
+        return;
+    }
+
+    if (parkingProblems === "Dagelijks of bijna altijd" || parkingProblems === "2 à 3 keer per week") {
+        heroInsightTitle.textContent = "Parkeerdruk lijkt een echte factor";
+        heroInsightText.textContent = "Als veel bestuurders dit zo ervaren, kan carpoolen ook een praktische oplossing worden en niet alleen een duurzame.";
+        return;
+    }
+
+    if (parkingOpinion === "Ja") {
+        heroInsightTitle.textContent = "Parkeerdruk is meer dan een individueel probleem";
+        heroInsightText.textContent = "Ook de perceptie van campusgebruikers helpt ons inschatten of gedeelde mobiliteit een bredere meerwaarde heeft.";
         return;
     }
 
@@ -785,7 +1244,7 @@ function updateHeroInsight() {
 
     if (openness === "Ja") {
         heroInsightTitle.textContent = "Er is duidelijke bereidheid om te carpoolen";
-        heroInsightText.textContent = "Dat is sterk onderzoekssignaal: de uitdaging ligt dan vooral in vertrouwen, matching en praktische organisatie.";
+        heroInsightText.textContent = "Dat is een sterk onderzoekssignaal: de uitdaging ligt dan vooral in vertrouwen, matching en praktische organisatie.";
         return;
     }
 
@@ -809,7 +1268,7 @@ function removeAnswersFromOldBranch(questionId, oldValue, newValue) {
     let oldQid = oldNext;
     let guard = 0;
 
-    while (oldQid && oldQid !== "done" && guard < 100) {
+    while (oldQid && oldQid !== "done" && guard < 200) {
         guard++;
         oldBranch.add(oldQid);
 
@@ -826,16 +1285,53 @@ function removeAnswersFromOldBranch(questionId, oldValue, newValue) {
     history = history.filter((id) => !oldBranch.has(id));
 }
 
-function goToNextQuestion() {
+async function checkEmailExists(email) {
+    const response = await fetch(window.SURVEY_CONFIG.checkEmailUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email: normalizeEmail(email) })
+    });
+
+    const data = await response.json();
+    return {
+        ok: response.ok,
+        status: response.status,
+        ...data
+    };
+}
+
+async function goToNextQuestion() {
     if (!validateCurrentQuestion()) return;
 
     const value = getCurrentValue();
+
+    if (currentQuestionId === "email") {
+        try {
+            const data = await checkEmailExists(value);
+
+            if (!data.ok) {
+                showError(data.message || "We konden je e-mailadres niet controleren. Probeer opnieuw.");
+                return;
+            }
+
+            if (data.exists) {
+                showError("Je hebt deze vragenlijst al ingevuld.");
+                return;
+            }
+        } catch (error) {
+            console.error("Fout bij e-mailcontrole:", error);
+            showError("We konden je e-mailadres niet controleren. Probeer opnieuw.");
+            return;
+        }
+    }
 
     if (currentQuestionId !== "summary" && currentQuestionId !== "info") {
         const previousValue = answers[currentQuestionId];
         answers[currentQuestionId] = value;
 
-        if (previousValue !== undefined && previousValue !== value) {
+        if (previousValue !== undefined && !valuesEqual(previousValue, value)) {
             removeAnswersFromOldBranch(currentQuestionId, previousValue, value);
         }
     }
@@ -858,7 +1354,9 @@ function escapeHtml(value) {
         .replaceAll("'", "&#039;");
 }
 
-nextBtn.addEventListener("click", goToNextQuestion);
+nextBtn.addEventListener("click", async () => {
+    await goToNextQuestion();
+});
 
 prevBtn.addEventListener("click", () => {
     if (history.length === 0) return;
@@ -867,18 +1365,18 @@ prevBtn.addEventListener("click", () => {
     renderQuestion(currentQuestionId);
 });
 
-skipBtn.addEventListener("click", () => {
+skipBtn.addEventListener("click", async () => {
     showError("");
-    answers[currentQuestionId] = "";
-    goToNextQuestion();
+    answers[currentQuestionId] = questions[currentQuestionId].type === "multiChoice" ? [] : "";
+    await goToNextQuestion();
 });
 
-form.addEventListener("keydown", (e) => {
+form.addEventListener("keydown", async (e) => {
     if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
         e.preventDefault();
 
         if (!nextBtn.classList.contains("hidden")) {
-            nextBtn.click();
+            await goToNextQuestion();
         } else if (!submitBtn.classList.contains("hidden")) {
             submitBtn.click();
         }
@@ -903,7 +1401,10 @@ async function submitSurvey() {
         const finalPath = buildFinalPath();
 
         const payload = {
-            answers,
+            answers: {
+                ...answers,
+                email: normalizeEmail(answers.email)
+            },
             visiblePath: finalPath,
             submittedAt: new Date().toISOString(),
             userAgent: navigator.userAgent
@@ -925,7 +1426,11 @@ async function submitSurvey() {
             return;
         }
 
-        showError(data.message || "Opslaan mislukt. Probeer opnieuw.");
+        if (response.status === 409) {
+            showError("Je hebt deze vragenlijst al ingevuld.");
+        } else {
+            showError(data.message || "Opslaan mislukt. Probeer opnieuw.");
+        }
     } catch (error) {
         console.error("Fout bij verzenden:", error);
         showError("Er is iets misgelopen bij het verzenden. Probeer opnieuw.");

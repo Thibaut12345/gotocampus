@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title || "Dashboard" %></title>
+    <link rel="stylesheet" href="/css/dashboard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-body">
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <div class="sidebar-badge">Analyse</div>
+                <h1>Mobiliteitsdashboard</h1>
+                <p>
+                    Trek snel conclusies uit je surveydata en duik daarna in de details.
+                </p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#overviewSection" class="sidebar-link active">Overzicht</a>
+                <a href="#conclusionSection" class="sidebar-link">Conclusies</a>
+                <a href="#chartsSection" class="sidebar-link">Grafieken</a>
+                <a href="#textSection" class="sidebar-link">Open antwoorden</a>
+                <a href="#responsesSection" class="sidebar-link">Alle responses</a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <button id="exportCsvBtn" class="sidebar-btn">CSV export</button>
+                <form method="POST" action="/dashboard/logout">
+                    <button type="submit" class="sidebar-btn secondary">Uitloggen</button>
+                </form>
+            </div>
+        </aside>
+
+        <main class="dashboard-main">
+            <section id="overviewSection" class="panel overview-panel">
+                <div class="overview-top">
+                    <div class="overview-copy">
+                        <div class="section-kicker">Overzicht</div>
+                        <h2 id="overviewTitle">Data wordt geladen...</h2>
+                        <p id="overviewText">
+                            We analyseren nu de responses en zetten de belangrijkste patronen om naar heldere inzichten.
+                        </p>
+                    </div>
+
+                    <div class="overview-actions">
+                        <div class="filter-inline">
+                            <label for="roleFilter">Rol</label>
+                            <select id="roleFilter">
+                                <option value="">Alles</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-inline">
+                            <label for="transportFilter">Vervoer</label>
+                            <select id="transportFilter">
+                                <option value="">Alles</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-inline">
+                            <label for="opennessFilter">Carpoolbereidheid</label>
+                            <select id="opennessFilter">
+                                <option value="">Alles</option>
+                                <option value="Ja">Ja</option>
+                                <option value="Misschien">Misschien</option>
+                                <option value="Nee">Nee</option>
+                            </select>
+                        </div>
+
+                        <button id="resetFiltersBtn" class="action-btn secondary small-btn">Reset</button>
+                    </div>
+                </div>
+
+                <div class="overview-kpis" id="overviewKpis"></div>
+            </section>
+
+            <section id="conclusionSection" class="panel">
+                <div class="section-header">
+                    <div>
+                        <div class="section-kicker">Wat betekent dit?</div>
+                        <h3>Belangrijkste conclusies</h3>
+                        <p>
+                            Geen technische dashboardtaal, maar concrete interpretaties waar je meteen iets mee kan.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="conclusion-grid" id="conclusionGrid"></div>
+
+                <div class="signal-panel" id="signalPanel"></div>
+            </section>
+
+            <section id="chartsSection" class="panel">
+                <div class="section-header">
+                    <div>
+                        <div class="section-kicker">Visueel overzicht</div>
+                        <h3>Grafieken</h3>
+                        <p>
+                            Compacte grafieken om patronen visueel te ondersteunen.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="chart-search-row">
+                    <input id="searchInput" type="text" placeholder="Zoek in motivatie, rol, vervoer..." />
+                    <div class="chart-search-note">De filters bovenaan werken op alle onderdelen van het dashboard.</div>
+                </div>
+
+                <div class="charts-grid">
+                    <article class="chart-card">
+                        <div class="chart-head">
+                            <h4>Vervoersverdeling</h4>
+                            <p>Wat is het dominante vervoersmiddel?</p>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="transportChart"></canvas>
+                        </div>
+                    </article>
+
+                    <article class="chart-card">
+                        <div class="chart-head">
+                            <h4>Carpoolbereidheid</h4>
+                            <p>Hoeveel mensen staan open voor carpool?</p>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="opennessChart"></canvas>
+                        </div>
+                    </article>
+
+                    <article class="chart-card">
+                        <div class="chart-head">
+                            <h4>Rolverdeling</h4>
+                            <p>Wie vulde de vragenlijst vooral in?</p>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="roleChart"></canvas>
+                        </div>
+                    </article>
+
+                    <article class="chart-card">
+                        <div class="chart-head">
+                            <h4>Barrières</h4>
+                            <p>Wat houdt mensen tegen?</p>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="barrierChart"></canvas>
+                        </div>
+                    </article>
+
+                    <article class="chart-card">
+                        <div class="chart-head">
+                            <h4>Motivaties</h4>
+                            <p>Wat overtuigt mensen om wel te carpoolen?</p>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="reasonChart"></canvas>
+                        </div>
+                    </article>
+
+                    <article class="chart-card">
+                        <div class="chart-head">
+                            <h4>Nut van het platform</h4>
+                            <p>Hoe kijken respondenten naar het idee zelf?</p>
+                        </div>
+                        <div class="chart-wrap">
+                            <canvas id="opinionChart"></canvas>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="textSection" class="panel">
+                <div class="section-header">
+                    <div>
+                        <div class="section-kicker">Letterlijke input</div>
+                        <h3>Open antwoorden</h3>
+                        <p>
+                            Hier lees je wat respondenten echt schreven bij de open vraag.
+                        </p>
+                    </div>
+                    <div id="textCountBadge" class="badge-pill">0 antwoorden</div>
+                </div>
+
+                <div class="text-toolbar">
+                    <input id="textSearchInput" type="text" placeholder="Zoek in open antwoorden..." />
+                </div>
+
+                <div id="openTextList" class="open-text-list">
+                    <div class="empty-state">Laden...</div>
+                </div>
+            </section>
+
+            <section id="responsesSection" class="panel">
+                <div class="section-header">
+                    <div>
+                        <div class="section-kicker">Detailniveau</div>
+                        <h3>Alle responses</h3>
+                        <p>
+                            Klik op een rij om alle antwoorden van die respondent te openen.
+                        </p>
+                    </div>
+                    <div class="badge-pill" id="responsesCountBadge">0 resultaten</div>
+                </div>
+
+                <div class="responses-table-wrap">
+                    <table class="responses-table">
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Rol</th>
+                                <th>Vervoer</th>
+                                <th>Campusdagen</th>
+                                <th>Carpool</th>
+                                <th>Duurzaamheid</th>
+                                <th>Open tekst</th>
+                            </tr>
+                        </thead>
+                        <tbody id="responsesTableBody">
+                            <tr>
+                                <td colspan="7">Laden...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="responseModal" class="modal hidden">
+        <div class="modal-backdrop" id="modalBackdrop"></div>
+        <div class="modal-content">
+            <div class="modal-top">
+                <div>
+                    <div class="section-kicker">Response detail</div>
+                    <h3>Volledige antwoorden</h3>
+                </div>
+                <button id="closeModalBtn" class="action-btn secondary">Sluiten</button>
+            </div>
+
+            <div id="modalMeta" class="modal-meta"></div>
+            <div id="modalAnswers" class="modal-answers"></div>
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
