@@ -2,7 +2,10 @@ const express = require("express");
 const path = require("path");
 const { MongoClient } = require("mongodb");
 const session = require("express-session");
-const nodemailer = require("nodemailer");
+const {
+    TransactionalEmailsApi,
+    TransactionalEmailsApiApiKeys
+} = require("@getbrevo/brevo");
 require("dotenv").config();
 
 const app = express();
@@ -35,48 +38,30 @@ const COLLECTION_NAME = process.env.COLLECTION_NAME || "survey_responses_v3";
 const DASHBOARD_USERNAME = process.env.DASHBOARD_USERNAME || "duurzaamheid_2026";
 const DASHBOARD_PASSWORD = process.env.DASHBOARD_PASSWORD || "admin_2026";
 
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS;
-const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "Campus Carpool";
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+const EMAIL_FROM = process.env.EMAIL_FROM || "gotocampusgent@gmail.com";
 
+let brevoClient = null;
 let mongoClient;
 let surveyCollection;
-let mailTransporter = null;
 
 function normalizeEmail(value) {
     return String(value || "").trim().toLowerCase();
 }
 
-function createMailTransporter() {
-    if (!EMAIL_USER || !EMAIL_PASS) {
-        console.warn("EMAIL_USER of EMAIL_PASS ontbreekt. Bevestigingsmails zijn uitgeschakeld.");
+function createBrevoClient() {
+    if (!BREVO_API_KEY) {
+        console.warn("BREVO_API_KEY ontbreekt.");
         return null;
     }
 
-    return nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            user: EMAIL_USER,
-            pass: EMAIL_PASS
-        }
-    });
+    const client = new TransactionalEmailsApi();
+    client.setApiKey(TransactionalEmailsApiApiKeys.apiKey, BREVO_API_KEY);
+    return client;
 }
-
-async function verifyMailTransporter() {
-    if (!mailTransporter) return;
-
-    try {
-        await mailTransporter.verify();
-        console.log("Mailserver correct geconfigureerd.");
-    } catch (error) {
-        console.error("Mailserver kon niet geverifieerd worden:", error.message);
-        console.log("Server blijft draaien, maar mails verzenden kan mislukken.");
-    }
-}
-
 async function sendConfirmationEmail(toEmail, answers = {}) {
-    if (!mailTransporter) {
-        console.warn("Geen mailTransporter beschikbaar. Mail wordt niet verzonden.");
+    if (!brevoClient) {
+        console.warn("Geen Brevo client beschikbaar.");
         return;
     }
 
@@ -90,63 +75,61 @@ async function sendConfirmationEmail(toEmail, answers = {}) {
     const safeName = String(recipientName || "").trim();
     const greeting = safeName ? `Hallo ${safeName},` : "Hallo,";
 
-    const mailOptions = {
-        from: `"${EMAIL_FROM_NAME}" <${EMAIL_USER}>`,
-        to: toEmail,
-        subject: "Bevestiging van je deelname aan de mobiliteitsbevraging",
-        html: `
+    const html = `
         <div style="font-family: Arial, sans-serif; background: #f5f7fb; padding: 30px;">
-        <div style="max-width: 600px; margin: auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+            <div style="max-width: 600px; margin: auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+                <div style="background: linear-gradient(135deg, #2c7a7b, #38b2ac); padding: 30px; text-align: center; color: white;">
+                    <h1 style="margin: 0;">Campus Carpool</h1>
+                    <p style="margin: 5px 0 0;">Bedankt voor je deelname!</p>
+                </div>
 
-            <!-- HEADER -->
-            <div style="background: linear-gradient(135deg, #2c7a7b, #38b2ac); padding: 30px; text-align: center;">
-            <h1 style="margin: 0;">🚗 Campus Carpool</h1>
-            <p style="margin: 5px 0 0;">Bedankt voor je deelname!</p>
-            </div>
+                <div style="padding: 30px; color: #1f2937;">
+                    <h2 style="margin-top: 0;">Je antwoorden zijn ontvangen</h2>
+                    <p>${greeting}</p>
+                    <p>
+                        Bedankt om onze mobiliteitsbevraging in te vullen.
+                        Met jouw input onderzoeken we of carpoolen op campus een haalbare en duurzame oplossing is.
+                    </p>
 
-            <!-- BODY -->
-            <div style="padding: 30px; color: #1f2937;">
+                    <div style="margin: 25px 0; padding: 20px; background: #ecfdf5; border-left: 5px solid #10b981; border-radius: 8px;">
+                        <h3 style="margin-top: 0;">Je beloning</h3>
+                        <p style="margin-bottom: 0;">
+                            Toon deze mail aan ons team op campus en ontvang jouw beloning.
+                        </p>
+                    </div>
 
-            <h2 style="margin-top: 0;">Je antwoorden zijn ontvangen ✅</h2>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <div style="display: inline-block; padding: 12px 20px; background: #2c7a7b; color: white; border-radius: 8px; font-weight: bold;">
+                            Toon deze mail op campus
+                        </div>
+                    </div>
 
-            <p>
-                Bedankt om onze mobiliteitsbevraging in te vullen. 
-                Met jouw input onderzoeken we of carpoolen op campus een haalbare en duurzame oplossing is.
-            </p>
+                    <p style="font-size: 14px; color: #6b7280;">
+                        Deze mail dient als bevestiging van je deelname.
+                    </p>
+                </div>
 
-            <!-- BELONING BLOK -->
-            <div style="margin: 25px 0; padding: 20px; background: #ecfdf5; border-left: 5px solid #10b981; border-radius: 8px;">
-                <h3 style="margin-top: 0;">🎁 Je beloning</h3>
-                <p style="margin-bottom: 0;">
-                Toon deze mail aan ons team op campus en ontvang jouw beloning.
-                </p>
-            </div>
-
-            <!-- CTA -->
-            <div style="text-align: center; margin: 30px 0;">
-                <div style="display: inline-block; padding: 12px 20px; background: #2c7a7b; color: white; border-radius: 8px; font-weight: bold;">
-                📩 Toon deze mail op campus
+                <div style="background: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
+                    <p style="margin: 0;">Campus Carpool Project</p>
+                    <p style="margin: 5px 0 0;">KU Leuven – Industrieel Ingenieur - Thibaut, Quinten en Mathieu</p>
                 </div>
             </div>
-
-            <p style="font-size: 14px; color: #6b7280;">
-                Deze mail dient als bevestiging van je deelname.
-            </p>
-
-            </div>
-
-            <!-- FOOTER -->
-            <div style="background: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
-            <p style="margin: 0;">Campus Carpool Project</p>
-            <p style="margin: 5px 0 0;">KU Leuven – Industrieel Ingenieur - Thibaut, Quinten en Mathieu</p>
-            </div>
-
         </div>
-        </div>
-        `
-    };
+    `;
 
-    await mailTransporter.sendMail(mailOptions);
+    const result = await brevoClient.sendTransacEmail({
+        sender: {
+            name: "Campus Carpool",
+            email: EMAIL_FROM
+        },
+        to: [
+            { email: toEmail }
+        ],
+        subject: "Bevestiging van je deelname",
+        htmlContent: html
+    });
+
+    console.log("Mail verzonden via Brevo:", result.body);
 }
 
 async function ensureIndexes() {
@@ -575,7 +558,7 @@ app.get("/health", (req, res) => {
         success: true,
         message: "Server draait",
         mongoConnected: !!surveyCollection,
-        mailConfigured: !!mailTransporter,
+        mailConfigured: !!resendClient,
         collection: COLLECTION_NAME
     });
 });
@@ -679,19 +662,20 @@ app.post("/api/survey", async (req, res) => {
 
         const result = await surveyCollection.insertOne(document);
 
-        try {
-            await sendConfirmationEmail(email, cleanedAnswers);
-            console.log(`Bevestigingsmail verzonden naar ${email}`);
-        } catch (mailError) {
-            console.error(`Survey opgeslagen, maar mail verzenden mislukte voor ${email}:`, mailError.message);
-        }
-
-        return res.status(201).json({
+        res.status(201).json({
             success: true,
             message: "Survey succesvol opgeslagen.",
             insertedId: result.insertedId,
             redirectUrl: "/survey/bedankt"
         });
+
+        sendConfirmationEmail(email, cleanedAnswers)
+            .then(() => {
+                console.log(`Bevestigingsmail verzonden naar ${email}`);
+            })
+            .catch((mailError) => {
+                console.error(`Survey opgeslagen, maar mail verzenden mislukte voor ${email}:`, mailError.message);
+            });
     } catch (error) {
         console.error("Fout bij opslaan in MongoDB:", error);
 
@@ -791,8 +775,7 @@ async function startServer() {
     try {
         await connectToMongo();
 
-        mailTransporter = createMailTransporter();
-        await verifyMailTransporter();
+        brevoClient = createBrevoClient();
 
         app.listen(PORT, () => {
             console.log(`Server draait op http://localhost:${PORT}`);
