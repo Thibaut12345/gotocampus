@@ -3,247 +3,539 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title><%= title || "Dashboard" %></title>
+    <title><%= title || "Campus Carpool Dashboard" %></title>
+
     <link rel="stylesheet" href="/css/dashboard.css" />
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    />
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""
+    ></script>
 </head>
-<body class="dashboard-body">
-    <div class="dashboard-layout">
-        <aside class="sidebar">
-            <div class="sidebar-top">
-                <div class="sidebar-badge">Analyse</div>
-                <h1>Mobiliteitsdashboard</h1>
-                <p>
-                    Trek snel conclusies uit je surveydata en duik daarna in de details.
-                </p>
+<body>
+    <div class="page-shell">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="brand-mark">CC</div>
+                <div class="brand-copy">
+                    <h1>Campus Carpool</h1>
+                    <p>Dashboard</p>
+                </div>
             </div>
 
-            <nav class="sidebar-nav">
-                <a href="#overviewSection" class="sidebar-link active">Overzicht</a>
-                <a href="#conclusionSection" class="sidebar-link">Conclusies</a>
-                <a href="#chartsSection" class="sidebar-link">Grafieken</a>
-                <a href="#textSection" class="sidebar-link">Open antwoorden</a>
-                <a href="#responsesSection" class="sidebar-link">Alle responses</a>
-            </nav>
+            <div class="topbar-right">
+                <div class="dataset-chip">
+                    <span>Dataset</span>
+                    <strong id="datasetTimestamp">Laden...</strong>
+                </div>
 
-            <div class="sidebar-bottom">
-                <button id="exportCsvBtn" class="sidebar-btn">CSV export</button>
-                <form method="POST" action="/dashboard/logout">
-                    <button type="submit" class="sidebar-btn secondary">Uitloggen</button>
+                <form method="POST" action="/dashboard/logout" class="logout-wrap">
+                    <button type="submit" class="secondary-btn">Uitloggen</button>
                 </form>
             </div>
-        </aside>
+        </header>
 
-        <main class="dashboard-main">
-            <section id="overviewSection" class="panel overview-panel">
-                <div class="overview-top">
-                    <div class="overview-copy">
-                        <div class="section-kicker">Overzicht</div>
-                        <h2 id="overviewTitle">Data wordt geladen...</h2>
-                        <p id="overviewText">
-                            We analyseren nu de responses en zetten de belangrijkste patronen om naar heldere inzichten.
-                        </p>
+        <main class="main-layout">
+            <section class="hero">
+                <div class="hero-copy">
+                    <p class="eyebrow">Campusmobiliteit Gent</p>
+                    <h2>Een helder overzicht van mobiliteit, parkingdruk en carpoolpotentieel</h2>
+                    <p class="hero-text">
+                        Analyse van mobiliteitsgedrag, regionale spreiding, parkeerdruk en realistische carpoolmatches op basis van de ingevulde bevraging.
+                    </p>
+                </div>
+
+                <div class="hero-side">
+                    <div class="hero-stat-card">
+                        <span class="hero-stat-label">Campus</span>
+                        <strong class="hero-stat-value">Gent</strong>
+                    </div>
+                    <div class="hero-stat-card">
+                        <span class="hero-stat-label">Focus</span>
+                        <strong class="hero-stat-value">Mobiliteit & parking</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="control-row">
+                <nav class="tab-switcher" aria-label="Dashboard navigatie">
+                    <button class="top-tab active" data-tab-target="overviewTab">Overzicht</button>
+                    <button class="top-tab" data-tab-target="parkingTab">Parking</button>
+                    <button class="top-tab" data-tab-target="matchesTab">Matchmaker</button>
+                    <button class="top-tab" data-tab-target="respondentsTab">Respondenten</button>
+                </nav>
+
+                <section class="filters-panel">
+                    <div class="filters-head">
+                        <p class="panel-kicker">Filters</p>
+                        <h3>Dataset verfijnen</h3>
                     </div>
 
-                    <div class="overview-actions">
-                        <div class="filter-inline">
-                            <label for="roleFilter">Rol</label>
-                            <select id="roleFilter">
-                                <option value="">Alles</option>
+                    <div class="filters-grid">
+                        <div>
+                            <label class="filter-label" for="institutionFilter">Instelling</label>
+                            <select id="institutionFilter" class="filter-control">
+                                <option value="all">Alle instellingen</option>
+                                <option value="KU Leuven">KU Leuven</option>
+                                <option value="Odisee">Odisee</option>
+                                <option value="LUCA">LUCA</option>
+                                <option value="Andere">Andere</option>
                             </select>
                         </div>
 
-                        <div class="filter-inline">
-                            <label for="transportFilter">Vervoer</label>
-                            <select id="transportFilter">
-                                <option value="">Alles</option>
+                        <div>
+                            <label class="filter-label" for="roleFilter">Doelgroep</label>
+                            <select id="roleFilter" class="filter-control">
+                                <option value="all">Iedereen</option>
+                                <option value="Student">Student</option>
+                                <option value="Personeel">Personeel</option>
+                                <option value="Overig">Overig</option>
                             </select>
                         </div>
 
-                        <div class="filter-inline">
-                            <label for="opennessFilter">Carpoolbereidheid</label>
-                            <select id="opennessFilter">
-                                <option value="">Alles</option>
-                                <option value="Ja">Ja</option>
-                                <option value="Misschien">Misschien</option>
-                                <option value="Nee">Nee</option>
+                        <div>
+                            <label class="filter-label" for="transportFilter">Vervoersmiddel</label>
+                            <select id="transportFilter" class="filter-control">
+                                <option value="all">Alle vervoersmiddelen</option>
+                                <option value="Auto">Auto</option>
+                                <option value="Openbaar vervoer">Openbaar vervoer</option>
+                                <option value="Fiets">Fiets</option>
+                                <option value="Te voet">Te voet</option>
+                                <option value="Anders">Anders</option>
                             </select>
                         </div>
 
-                        <button id="resetFiltersBtn" class="action-btn secondary small-btn">Reset</button>
+                        <div class="filter-actions">
+                            <button id="resetFiltersBtn" class="primary-btn">Reset filters</button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="overview-kpis" id="overviewKpis"></div>
+                    <div class="analysis-note">
+                        CO2 wordt enkel berekend voor huidige autobestuurders van KU Leuven en Odisee. Zo vermijd je een verschuiving van fiets of openbaar vervoer naar auto-carpool. De matchlogica is bewust iets losser zodat ook kleinere datasets bruikbare matches tonen.
+                    </div>
+                </section>
             </section>
 
-            <section id="conclusionSection" class="panel">
-                <div class="section-header">
-                    <div>
-                        <div class="section-kicker">Wat betekent dit?</div>
-                        <h3>Belangrijkste conclusies</h3>
-                        <p>
-                            Geen technische dashboardtaal, maar concrete interpretaties waar je meteen iets mee kan.
+            <section id="overviewTab" class="top-tab-panel active">
+                <section class="kpi-grid">
+                    <article class="kpi-card kpi-card-featured">
+                        <span class="kpi-label">Totaal antwoorden</span>
+                        <strong id="kpiTotalResponses" class="kpi-value">0</strong>
+                        <p class="kpi-subtext">Alle antwoorden in de dataset</p>
+                    </article>
+
+                    <article class="kpi-card">
+                        <span class="kpi-label">Relevant voor carpool</span>
+                        <strong id="kpiEligibleCarpool" class="kpi-value">0</strong>
+                        <p class="kpi-subtext">Autogebruikers van KU Leuven en Odisee</p>
+                    </article>
+
+                    <article class="kpi-card">
+                        <span class="kpi-label">Open voor carpool</span>
+                        <strong id="kpiOpenToCarpool" class="kpi-value">0%</strong>
+                        <p class="kpi-subtext">Binnen de relevante autogroep</p>
+                    </article>
+
+                    <article class="kpi-card">
+                        <span class="kpi-label">Pilotscore</span>
+                        <strong id="kpiReadinessScore" class="kpi-value">0/100</strong>
+                        <p class="kpi-subtext">Inschatting van haalbaarheid</p>
+                    </article>
+
+                    <article class="kpi-card kpi-card-success">
+                        <span class="kpi-label">Potentiële CO2-besparing</span>
+                        <strong id="kpiPotentialCO2" class="kpi-value">0 kg/week</strong>
+                        <p class="kpi-subtext">Op basis van beste matches</p>
+                    </article>
+
+                    <article class="kpi-card">
+                        <span class="kpi-label">Niet meegerekend</span>
+                        <strong id="kpiExcludedNonDrivers" class="kpi-value">0</strong>
+                        <p class="kpi-subtext">Niet-autogebruikers</p>
+                    </article>
+                </section>
+
+                <section class="section-grid section-grid-2">
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Inzicht</p>
+                                <h3>Samenvatting</h3>
+                            </div>
+                        </div>
+                        <div id="insightList" class="insight-list"></div>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Voorspelling</p>
+                                <h3>Pilot</h3>
+                            </div>
+                        </div>
+
+                        <div class="prediction-grid">
+                            <div class="prediction-card">
+                                <span class="prediction-label">Verwachte matchkans</span>
+                                <strong id="predictedMatchRate">0%</strong>
+                                <p id="predictedMatchRateText" class="muted-text"></p>
+                            </div>
+
+                            <div class="prediction-card">
+                                <span class="prediction-label">Actieve matches</span>
+                                <strong id="predictedActiveMatches">0</strong>
+                                <p id="predictedActiveMatchesText" class="muted-text"></p>
+                            </div>
+
+                            <div class="prediction-card">
+                                <span class="prediction-label">Wekelijkse besparing</span>
+                                <strong id="predictedCO2Range">0 kg</strong>
+                                <p id="predictedCO2RangeText" class="muted-text"></p>
+                            </div>
+
+                            <div class="prediction-card">
+                                <span class="prediction-label">Grootste risico</span>
+                                <strong id="predictedMainRisk">-</strong>
+                                <p id="predictedMainRiskText" class="muted-text"></p>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="section-grid section-grid-2">
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Profiel</p>
+                                <h3>Vervoer</h3>
+                            </div>
+                        </div>
+                        <canvas id="transportChart"></canvas>
+                    </article>
+
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Structuur</p>
+                                <h3>Instelling en rol</h3>
+                            </div>
+                        </div>
+                        <canvas id="institutionRoleChart"></canvas>
+                    </article>
+                </section>
+
+                <section class="section-grid section-grid-2">
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Interesse</p>
+                                <h3>Carpoolbereidheid</h3>
+                            </div>
+                        </div>
+                        <canvas id="carpoolInterestChart"></canvas>
+                    </article>
+
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Drempels</p>
+                                <h3>Rooster en flexibiliteit</h3>
+                            </div>
+                        </div>
+                        <canvas id="scheduleFlexChart"></canvas>
+                    </article>
+                </section>
+
+                <section class="section-grid section-grid-2">
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Kaart</p>
+                                <h3>Locaties</h3>
+                            </div>
+                        </div>
+                        <div id="overviewMap" class="map-panel"></div>
+                        <p class="map-note">
+                            Locaties op basis van postcode of gemeente. Dit blijft een benadering.
                         </p>
-                    </div>
-                </div>
+                    </article>
 
-                <div class="conclusion-grid" id="conclusionGrid"></div>
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Regio</p>
+                                <h3>Clusters</h3>
+                            </div>
+                        </div>
+                        <div id="postcodeClusters" class="cluster-list"></div>
+                    </article>
+                </section>
 
-                <div class="signal-panel" id="signalPanel"></div>
+                <section class="section-grid section-grid-2">
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Methode</p>
+                                <h3>Methodologie</h3>
+                            </div>
+                        </div>
+                        <div id="methodologyList" class="methodology-list"></div>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Besluit</p>
+                                <h3>Conclusie</h3>
+                            </div>
+                        </div>
+                        <div id="finalConclusion" class="final-conclusion"></div>
+                    </article>
+                </section>
             </section>
 
-            <section id="chartsSection" class="panel">
-                <div class="section-header">
-                    <div>
-                        <div class="section-kicker">Visueel overzicht</div>
-                        <h3>Grafieken</h3>
-                        <p>
-                            Compacte grafieken om patronen visueel te ondersteunen.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="chart-search-row">
-                    <input id="searchInput" type="text" placeholder="Zoek in motivatie, rol, vervoer..." />
-                    <div class="chart-search-note">De filters bovenaan werken op alle onderdelen van het dashboard.</div>
-                </div>
-
-                <div class="charts-grid">
-                    <article class="chart-card">
-                        <div class="chart-head">
-                            <h4>Vervoersverdeling</h4>
-                            <p>Wat is het dominante vervoersmiddel?</p>
-                        </div>
-                        <div class="chart-wrap">
-                            <canvas id="transportChart"></canvas>
-                        </div>
+            <section id="parkingTab" class="top-tab-panel">
+                <section class="kpi-grid parking-kpis">
+                    <article class="kpi-card">
+                        <span class="kpi-label">Bestuurders met parkeerdruk</span>
+                        <strong id="parkingPressureDrivers" class="kpi-value">0</strong>
+                        <p class="kpi-subtext">Dagelijks, 2 à 3 keer/week of 1 keer/week</p>
                     </article>
 
-                    <article class="chart-card">
-                        <div class="chart-head">
-                            <h4>Carpoolbereidheid</h4>
-                            <p>Hoeveel mensen staan open voor carpool?</p>
-                        </div>
-                        <div class="chart-wrap">
-                            <canvas id="opennessChart"></canvas>
-                        </div>
+                    <article class="kpi-card">
+                        <span class="kpi-label">Parking als carpoolreden</span>
+                        <strong id="parkingMotivationDrivers" class="kpi-value">0</strong>
+                        <p class="kpi-subtext">Bestuurders die makkelijker parkeren noemen</p>
                     </article>
 
-                    <article class="chart-card">
-                        <div class="chart-head">
-                            <h4>Rolverdeling</h4>
-                            <p>Wie vulde de vragenlijst vooral in?</p>
+                    <article class="kpi-card kpi-card-success">
+                        <span class="kpi-label">Minder auto's op campus</span>
+                        <strong id="parkingPotentialCarsRemoved" class="kpi-value">0</strong>
+                        <p class="kpi-subtext">Op basis van unieke matches</p>
+                    </article>
+                </section>
+
+                <section class="section-grid section-grid-2">
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Parking</p>
+                                <h3>Frequentie problemen</h3>
+                            </div>
                         </div>
-                        <div class="chart-wrap">
-                            <canvas id="roleChart"></canvas>
-                        </div>
+                        <canvas id="parkingChart"></canvas>
                     </article>
 
-                    <article class="chart-card">
-                        <div class="chart-head">
-                            <h4>Barrières</h4>
-                            <p>Wat houdt mensen tegen?</p>
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Gedrag</p>
+                                <h3>Bij volle parking</h3>
+                            </div>
                         </div>
-                        <div class="chart-wrap">
-                            <canvas id="barrierChart"></canvas>
+                        <canvas id="parkingIfFullChart"></canvas>
+                    </article>
+                </section>
+
+                <section class="section-grid section-grid-2">
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Druk</p>
+                                <h3>Foutparkeren</h3>
+                            </div>
                         </div>
+                        <canvas id="wrongParkingChart"></canvas>
                     </article>
 
-                    <article class="chart-card">
-                        <div class="chart-head">
-                            <h4>Motivaties</h4>
-                            <p>Wat overtuigt mensen om wel te carpoolen?</p>
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Inzicht</p>
+                                <h3>Analyse</h3>
+                            </div>
                         </div>
-                        <div class="chart-wrap">
-                            <canvas id="reasonChart"></canvas>
-                        </div>
+                        <div id="parkingInsightList" class="insight-list"></div>
                     </article>
-
-                    <article class="chart-card">
-                        <div class="chart-head">
-                            <h4>Nut van het platform</h4>
-                            <p>Hoe kijken respondenten naar het idee zelf?</p>
-                        </div>
-                        <div class="chart-wrap">
-                            <canvas id="opinionChart"></canvas>
-                        </div>
-                    </article>
-                </div>
+                </section>
             </section>
 
-            <section id="textSection" class="panel">
-                <div class="section-header">
-                    <div>
-                        <div class="section-kicker">Letterlijke input</div>
-                        <h3>Open antwoorden</h3>
-                        <p>
-                            Hier lees je wat respondenten echt schreven bij de open vraag.
-                        </p>
+            <section id="matchesTab" class="top-tab-panel">
+                <section class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <p class="panel-kicker">Matchmaker</p>
+                            <h3>Carpoolmatches</h3>
+                        </div>
+
+                        <div class="match-controls">
+                            <label for="matchLimit">Toon</label>
+                            <select id="matchLimit" class="filter-control compact">
+                                <option value="5">5 matches</option>
+                                <option value="10" selected>10 matches</option>
+                                <option value="20">20 matches</option>
+                                <option value="50">50 matches</option>
+                            </select>
+                        </div>
                     </div>
-                    <div id="textCountBadge" class="badge-pill">0 antwoorden</div>
-                </div>
 
-                <div class="text-toolbar">
-                    <input id="textSearchInput" type="text" placeholder="Zoek in open antwoorden..." />
-                </div>
+                    <div class="match-explainer">
+                        Klik op een match voor de detailanalyse, routecontext en CO2-berekening.
+                    </div>
 
-                <div id="openTextList" class="open-text-list">
-                    <div class="empty-state">Laden...</div>
-                </div>
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Score</th>
+                                    <th>Persoon A</th>
+                                    <th>Persoon B</th>
+                                    <th>Instelling</th>
+                                    <th>Postcodes</th>
+                                    <th>Traject</th>
+                                    <th>Timing</th>
+                                    <th>Rol</th>
+                                    <th>Potentiële CO2</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matchTableBody">
+                                <tr>
+                                    <td colspan="9" class="empty-row">Nog geen matches berekend.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </section>
 
-            <section id="responsesSection" class="panel">
-                <div class="section-header">
-                    <div>
-                        <div class="section-kicker">Detailniveau</div>
-                        <h3>Alle responses</h3>
-                        <p>
-                            Klik op een rij om alle antwoorden van die respondent te openen.
-                        </p>
+            <section id="respondentsTab" class="top-tab-panel">
+                <section class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <p class="panel-kicker">Data</p>
+                            <h3>Respondenten</h3>
+                        </div>
                     </div>
-                    <div class="badge-pill" id="responsesCountBadge">0 resultaten</div>
-                </div>
 
-                <div class="responses-table-wrap">
-                    <table class="responses-table">
-                        <thead>
-                            <tr>
-                                <th>Datum</th>
-                                <th>Rol</th>
-                                <th>Vervoer</th>
-                                <th>Campusdagen</th>
-                                <th>Carpool</th>
-                                <th>Duurzaamheid</th>
-                                <th>Open tekst</th>
-                            </tr>
-                        </thead>
-                        <tbody id="responsesTableBody">
-                            <tr>
-                                <td colspan="7">Laden...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                    <div class="respondent-toolbar">
+                        <input
+                            id="respondentSearch"
+                            class="filter-control"
+                            type="text"
+                            placeholder="Zoek op e-mail, postcode, instelling, rol..."
+                        />
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>E-mail</th>
+                                    <th>Instelling</th>
+                                    <th>Rol</th>
+                                    <th>Postcode</th>
+                                    <th>Vervoer</th>
+                                    <th>Campusdagen</th>
+                                    <th>Carpoolbereidheid</th>
+                                    <th>Datum</th>
+                                </tr>
+                            </thead>
+                            <tbody id="respondentTableBody">
+                                <tr>
+                                    <td colspan="8" class="empty-row">Nog geen respondenten geladen.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </section>
         </main>
     </div>
 
-    <div id="responseModal" class="modal hidden">
-        <div class="modal-backdrop" id="modalBackdrop"></div>
-        <div class="modal-content">
-            <div class="modal-top">
-                <div>
-                    <div class="section-kicker">Response detail</div>
-                    <h3>Volledige antwoorden</h3>
-                </div>
-                <button id="closeModalBtn" class="action-btn secondary">Sluiten</button>
+    <div id="overlay" class="overlay hidden"></div>
+
+    <aside id="matchDrawer" class="drawer hidden" aria-hidden="true">
+        <div class="drawer-header">
+            <div>
+                <p class="panel-kicker">Matchdetails</p>
+                <h3 id="matchDrawerTitle">Match</h3>
+            </div>
+            <button class="drawer-close" data-close-drawer="matchDrawer">&times;</button>
+        </div>
+
+        <div class="drawer-content">
+            <div id="matchDrawerMeta" class="drawer-summary"></div>
+
+            <div class="drawer-block">
+                <h4>Kaart</h4>
+                <div id="matchRouteMap" class="map-panel map-small"></div>
+                <p id="matchRouteText" class="muted-text"></p>
             </div>
 
-            <div id="modalMeta" class="modal-meta"></div>
-            <div id="modalAnswers" class="modal-answers"></div>
+            <div class="drawer-block">
+                <h4>Waarom deze match?</h4>
+                <div id="matchWhyList" class="why-list"></div>
+            </div>
+
+            <div class="drawer-block">
+                <h4>CO2-berekening</h4>
+                <div id="matchCO2Box" class="calc-box"></div>
+            </div>
         </div>
-    </div>
+    </aside>
+
+    <aside id="respondentDrawer" class="drawer hidden" aria-hidden="true">
+        <div class="drawer-header">
+            <div>
+                <p class="panel-kicker">Respondentdetails</p>
+                <h3 id="respondentDrawerTitle">Respondent</h3>
+            </div>
+            <button class="drawer-close" data-close-drawer="respondentDrawer">&times;</button>
+        </div>
+
+        <div class="drawer-content">
+            <div id="respondentQuickFacts" class="drawer-summary"></div>
+
+            <div class="drawer-block">
+                <h4>Ingevulde antwoorden</h4>
+                <div id="respondentAnswerList" class="answer-list"></div>
+            </div>
+        </div>
+    </aside>
+
+    <script>
+        window.dashboardData = <%- JSON.stringify(dashboardData || []) %>;
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const tabButtons = document.querySelectorAll("[data-tab-target]");
+            const panels = document.querySelectorAll(".top-tab-panel");
+
+            tabButtons.forEach((button) => {
+                button.addEventListener("click", () => {
+                    const targetId = button.dataset.tabTarget;
+                    if (!targetId) return;
+
+                    document.querySelectorAll(".top-tab").forEach((btn) => {
+                        btn.classList.toggle("active", btn.dataset.tabTarget === targetId);
+                    });
+
+                    panels.forEach((panel) => {
+                        panel.classList.toggle("active", panel.id === targetId);
+                    });
+                });
+            });
+        });
+    </script>
 
     <script src="/js/dashboard.js"></script>
 </body>
