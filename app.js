@@ -59,6 +59,7 @@ function createBrevoClient() {
     client.setApiKey(TransactionalEmailsApiApiKeys.apiKey, BREVO_API_KEY);
     return client;
 }
+
 async function sendConfirmationEmail(toEmail, answers = {}) {
     if (!brevoClient) {
         console.warn("Geen Brevo client beschikbaar.");
@@ -245,12 +246,8 @@ function toArray(value) {
 function normalizeResponse(doc) {
     const answers = doc.answers || {};
 
-    const carpoolOpenness =
+    const openToCarpool =
         answers.openToCarpool ||
-        answers.ovToCarpool ||
-        answers.bikeToCarpool ||
-        answers.walkToCarpool ||
-        answers.otherToCarpool ||
         null;
 
     const considerCar =
@@ -260,16 +257,31 @@ function normalizeResponse(doc) {
         answers.otherConsiderCar ||
         null;
 
+    const nonCarToCarpool =
+        answers.ovToCarpool ||
+        answers.bikeToCarpool ||
+        answers.walkToCarpool ||
+        answers.otherToCarpool ||
+        null;
+
     return {
         id: String(doc._id),
         submittedAt: doc.submittedAt || null,
         createdAt: doc.createdAt || null,
 
         email: doc.email || answers.email || "",
+
         role: answers.role || null,
         institution: answers.institution || null,
+        originArea: answers.originArea || null,
+
         campusDays: answers.campusDays || null,
+        scheduleType: answers.scheduleType || null,
+        departureWindowMorning: answers.departureWindowMorning || null,
+        departureWindowEvening: answers.departureWindowEvening || null,
+
         transport: answers.transport || null,
+        otherTransport: answers.otherTransport || "",
 
         carDistance: parseNumber(answers.carDistance),
         bikeDistance: parseNumber(answers.bikeDistance),
@@ -283,12 +295,18 @@ function normalizeResponse(doc) {
         parkingIfFull: toArray(answers.parkingIfFull),
         wrongParkingFrequency: answers.wrongParkingFrequency || null,
 
-        carpoolOpenness,
+        openToCarpool,
+        carpoolOpenness: openToCarpool || nonCarToCarpool,
         considerCar,
 
         carpoolReason: answers.carpoolReason || null,
         carpoolBarrier: toArray(answers.carpoolBarrier),
+        realisticCarpoolDays: answers.realisticCarpoolDays || null,
+        realisticCarpoolDaysNonCar: answers.realisticCarpoolDaysNonCar || null,
         departureFlexibility: answers.departureFlexibility || null,
+
+        carpoolRolePreference: answers.carpoolRolePreference || null,
+        carpoolRolePreferenceNonCar: answers.carpoolRolePreferenceNonCar || null,
         matchingPreference: answers.matchingPreference || null,
         carpoolPartnerPreference: answers.carpoolPartnerPreference || null,
 
@@ -310,7 +328,8 @@ function normalizeResponse(doc) {
         parkingCampusOpinion: answers.parkingCampusOpinion || null,
 
         motivation: answers.motivation || "",
-        otherTransport: answers.otherTransport || "",
+        pilotContactPermission: answers.pilotContactPermission || null,
+
         answers
     };
 }
@@ -558,7 +577,7 @@ app.get("/health", (req, res) => {
         success: true,
         message: "Server draait",
         mongoConnected: !!surveyCollection,
-        mailConfigured: !!resendClient,
+        mailConfigured: !!brevoClient,
         collection: COLLECTION_NAME
     });
 });
@@ -728,10 +747,27 @@ app.post("/dashboard/logout", requireDashboardAuth, (req, res) => {
 
 /* -------------------- DASHBOARD PAGINA -------------------- */
 
-app.get("/dashboard", requireDashboardAuth, (req, res) => {
-    res.render("dashboard", {
-        title: "Duurzaamheidsdashboard"
-    });
+app.get("/dashboard", requireDashboardAuth, async (req, res) => {
+    try {
+        if (!surveyCollection) {
+            return res.status(503).send("Database is momenteel niet beschikbaar.");
+        }
+
+        const docs = await surveyCollection
+            .find({})
+            .sort({ createdAt: -1, submittedAt: -1 })
+            .toArray();
+
+        const responses = docs.map(normalizeResponse);
+
+        res.render("dashboard", {
+            title: "Duurzaamheidsdashboard",
+            dashboardData: responses
+        });
+    } catch (error) {
+        console.error("Fout bij laden dashboardpagina:", error);
+        res.status(500).send("Dashboard kon niet geladen worden.");
+    }
 });
 
 /* -------------------- DASHBOARD DATA API -------------------- */
