@@ -1170,7 +1170,7 @@ function updateProgress() {
     } else if (currentQuestionId === "summary") {
         progressSubtext.textContent = "Laatste controle voor verzenden";
     } else {
-        progressSubtext.textContent = `${currentStep - 1} vraag${currentStep - 1 === 1 ? "" : "en"} ingevuld`;
+        progressSubtext.textContent = `${currentStep - 1} ${currentStep - 1 === 1 ? "vraag" : "vragen"} ingevuld`;
     }
 }
 
