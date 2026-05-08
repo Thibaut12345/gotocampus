@@ -224,20 +224,34 @@
             originAreaNumeric: postcodeToNumber(r.originArea),
             campusDaysNumeric: parseCampusDays(r.campusDays),
             realisticCarpoolDaysNumeric: parseRealisticDays(r.realisticCarpoolDays || r.realisticCarpoolDaysNonCar),
+            realisticCarpoolDaysDriverNumeric: parseRealisticDays(r.realisticCarpoolDays),
+            realisticCarpoolDaysNonCarNumeric: parseRealisticDays(r.realisticCarpoolDaysNonCar),
             departureFlexibilityScore: flexibilityScore(r.departureFlexibility),
             scheduleTypeScore: scheduleScore(r.scheduleType),
             parkingPressureNumeric: parkingPressureScore(r.parkingProblemFrequency),
             openToCarpoolScore: postureOfOpenness(r.openToCarpool),
             carDistanceNumeric: toNumber(r.carDistance),
+            ovHomeDistanceNumeric: toNumber(r.ovHomeDistance),
+            ovTravelTimeNumeric: toNumber(r.ovTravelTime),
+            bikeDistanceNumeric: toNumber(r.bikeDistance),
+            walkTimeNumeric: toNumber(r.walkTime),
             parkingIfFullArray: toArray(r.parkingIfFull),
-            carpoolBarrierArray: toArray(r.carpoolBarrier)
+            carpoolBarrierArray: toArray(r.carpoolBarrier),
+            ovReasonNotCarArray: toArray(r.ovReasonNotCar),
+            bikeReasonNotCarArray: toArray(r.bikeReasonNotCar),
+            walkReasonNotCarArray: toArray(r.walkReasonNotCar),
+            otherReasonNotCarArray: toArray(r.otherReasonNotCar)
         };
     }
 
     const respondents = rawData.map(normalizeRespondent);
 
+    function campusCoreRespondent(r) {
+        return ["KU Leuven", "Odisee"].includes(r.institution);
+    }
+
     function eligibleForCarpoolModel(r) {
-        return ["KU Leuven", "Odisee"].includes(r.institution) && r.transport === "Auto";
+        return campusCoreRespondent(r) && r.transport === "Auto";
     }
 
     function willingDriver(r) {
@@ -247,7 +261,49 @@
     }
 
     function excludedFromImpact(r) {
-        return ["KU Leuven", "Odisee"].includes(r.institution) && r.transport !== "Auto";
+        return campusCoreRespondent(r) && r.transport !== "Auto";
+    }
+
+    function nonCarCampusRespondent(r) {
+        return campusCoreRespondent(r) && r.transport !== "Auto";
+    }
+
+    function getNonCarConsiderCarValue(r) {
+        if (r.transport === "Openbaar vervoer") return r.ovConsiderCar || null;
+        if (r.transport === "Fiets") return r.bikeConsiderCar || null;
+        if (r.transport === "Te voet") return r.walkConsiderCar || null;
+        if (r.transport === "Anders") return r.otherConsiderCar || null;
+        return null;
+    }
+
+    function getNonCarToCarpoolValue(r) {
+        if (r.transport === "Openbaar vervoer") return r.ovToCarpool || null;
+        if (r.transport === "Fiets") return r.bikeToCarpool || null;
+        if (r.transport === "Te voet") return r.walkToCarpool || null;
+        if (r.transport === "Anders") return r.otherToCarpool || null;
+        return null;
+    }
+
+    function getNonCarReasons(r) {
+        if (r.transport === "Openbaar vervoer") return r.ovReasonNotCarArray;
+        if (r.transport === "Fiets") return r.bikeReasonNotCarArray;
+        if (r.transport === "Te voet") return r.walkReasonNotCarArray;
+        if (r.transport === "Anders") return r.otherReasonNotCarArray;
+        return [];
+    }
+
+    function getNonCarPotentialRole(r) {
+        return r.carpoolRolePreferenceNonCar || null;
+    }
+
+    function sustainabilityPriorityLabel(value) {
+        const map = {
+            1: "Niet belangrijk",
+            2: "Beetje belangrijk",
+            3: "Belangrijk",
+            4: "Heel belangrijk"
+        };
+        return map[value] || String(value || "-");
     }
 
     function getFilteredRespondents() {
@@ -264,7 +320,11 @@
                     r.transport,
                     r.originArea,
                     r.campusDays,
-                    r.openToCarpool
+                    r.openToCarpool,
+                    r.ovConsiderCar,
+                    r.bikeConsiderCar,
+                    r.walkConsiderCar,
+                    r.otherConsiderCar
                 ].join(" ").toLowerCase();
 
                 if (!haystack.includes(state.respondentSearch.toLowerCase())) return false;
@@ -472,6 +532,12 @@
         return "Vandaag nog een smalle basis";
     }
 
+    function modalShiftRiskLabel(riskScore) {
+        if (riskScore >= 60) return "Hoog";
+        if (riskScore >= 35) return "Middel";
+        return "Laag";
+    }
+
     function mainRiskLabel(eligibleDrivers) {
         if (!eligibleDrivers.length) {
             return {
@@ -502,7 +568,10 @@
             }
         ].sort((a, b) => b.value - a.value)[0];
 
-        return ratios;
+        return {
+            title: ratios.type,
+            text: ratios.text
+        };
     }
 
     function setText(id, value) {
@@ -510,7 +579,7 @@
         if (el) el.textContent = value;
     }
 
-    function buildInsights(filtered, eligible, willing, uniqueMatches, readinessScore) {
+    function buildInsights(filtered, eligible, willing, uniqueMatches, readinessScore, nonCarCampus, shiftRiskScore) {
         const insights = [];
         const transportCounts = countBy(filtered, r => r.transport);
         const topTransport = topEntries(transportCounts, 1)[0];
@@ -523,14 +592,14 @@
         }
 
         insights.push({
-            title: "Geen vervoersmiddelshift",
-            text: `${filtered.filter(excludedFromImpact).length} niet-autogebruikers uit KU Leuven/Odisee worden bewust niet meegerekend in de CO2-winst.`
+            title: "Geen vervoersmiddelshift in impactcijfers",
+            text: `${filtered.filter(excludedFromImpact).length} niet-autogebruikers uit KU Leuven/Odisee worden bewust niet meegerekend in de CO2-winst of matchimpact.`
         });
 
         if (eligible.length) {
             insights.push({
                 title: "Bereidheid bij huidige chauffeurs",
-                text: `${percentage(willing.length, eligible.length)}% van de eligible huidige autobestuurders staat open voor meer carpoolen en ziet minstens enige haalbaarheid.`
+                text: `${percentage(willing.length, eligible.length)}% van de relevante huidige autobestuurders staat open voor meer carpoolen en ziet minstens enige haalbaarheid.`
             });
         }
 
@@ -539,6 +608,13 @@
             insights.push({
                 title: "Sterkste matchsignaal",
                 text: `De beste unieke match scoort ${best.score}/100 en kan ongeveer ${best.co2.toFixed(1)} kg CO2 per week vermijden.`
+            });
+        }
+
+        if (nonCarCampus.length) {
+            insights.push({
+                title: "Shift-risico blijft zichtbaar",
+                text: `Voor ${nonCarCampus.length} campusrespondenten die nu geen auto gebruiken, wordt apart gecontroleerd of het concept mogelijk extra autoverkeer zou aantrekken. Huidig risiconiveau: ${modalShiftRiskLabel(shiftRiskScore).toLowerCase()}.`
             });
         }
 
@@ -598,14 +674,15 @@
     }
 
     function buildPostcodeClusters(filtered) {
-        const eligible = filtered.filter(r => ["KU Leuven", "Odisee"].includes(r.institution));
+        const eligible = filtered.filter(r => campusCoreRespondent(r));
         const clusters = eligible.reduce((acc, r) => {
             if (r.originAreaNumeric == null) return acc;
             const cluster = `${Math.floor(r.originAreaNumeric / 100)}xx`;
-            if (!acc[cluster]) acc[cluster] = { count: 0, drivers: 0, willingDrivers: 0 };
+            if (!acc[cluster]) acc[cluster] = { count: 0, drivers: 0, willingDrivers: 0, nonDrivers: 0 };
             acc[cluster].count += 1;
             if (r.transport === "Auto") acc[cluster].drivers += 1;
             if (willingDriver(r)) acc[cluster].willingDrivers += 1;
+            if (r.transport !== "Auto") acc[cluster].nonDrivers += 1;
             return acc;
         }, {});
 
@@ -631,21 +708,24 @@
                 <div class="cluster-meta">
                     <span>${info.drivers} autobestuurders</span>
                     <span>${info.willingDrivers} bereid tot carpool</span>
+                    <span>${info.nonDrivers} niet-auto</span>
                 </div>
             </div>
         `).join("");
     }
 
-    function buildMethodology(filtered, eligible, pairs, uniqueMatches) {
+    function buildMethodology(filtered, eligible, pairs, uniqueMatches, nonCarCampus) {
         const items = [
             `CO2-impact wordt enkel berekend voor huidige autobestuurders van KU Leuven en Odisee.`,
             `Niet-autogebruikers blijven zichtbaar in het dashboard, maar tellen niet mee in de vermeden uitstoot.`,
+            `Er is een apart modal-shiftluik dat expliciet controleert of het concept OV-, fiets- of wandelgebruikers richting auto-carpool kan trekken.`,
             `Een match is alleen geldig als mensen dicht bij elkaar wonen of een duidelijk overlappend traject hebben.`,
             `Tijdsvensters mogen licht verschillen, maar niet los van elkaar liggen.`,
             `Rolvoorkeur, partnervoorkeur, flexibiliteit en roostertype verhogen of verlagen de matchscore.`,
             `Voor CO2-berekening gebruiken we enkel het geschatte gedeelde traject, niet de volledige individuele afstand.`,
             `Parkinganalyse kijkt apart naar parkeerdruk, gedrag bij volle parking en foutparkeren.`,
             `Van ${pairs.length} mogelijke paren blijven ${uniqueMatches.length} unieke topmatches over voor de impactschatting.`,
+            `${nonCarCampus.length} campusrespondenten zonder huidige auto worden apart gebruikt om de insteek van het project te toetsen op duurzaamheid en shift-risico.`,
             `Kaartpunten worden gegeocodeerd op basis van postcode of locatie-invoer en zijn dus benaderingen, geen exacte woonadressen.`
         ];
 
@@ -655,7 +735,7 @@
         }
     }
 
-    function buildFinalConclusion(filtered, eligible, willing, uniqueMatches, readinessScore, totalCO2) {
+    function buildFinalConclusion(filtered, eligible, willing, uniqueMatches, readinessScore, totalCO2, nonCarCampus, shiftRiskScore) {
         const container = document.getElementById("finalConclusion");
         if (!container) return;
 
@@ -669,7 +749,7 @@
         if (!eligible.length) {
             conclusion.push("In deze selectie zijn er te weinig huidige autobestuurders van KU Leuven/Odisee om een zinvolle carpoolimpact te berekenen.");
         } else {
-            conclusion.push("De analyse focust bewust op bestaande autoverplaatsingen, zodat de gerapporteerde winst een echte optimalisatie van autogebruik is.");
+            conclusion.push("De analyse focust bewust op bestaande autoverplaatsingen, zodat de gerapporteerde winst een echte optimalisatie van huidig autogebruik is.");
         }
 
         if (eligible.length) {
@@ -682,9 +762,112 @@
             conclusion.push("De huidige selectie levert nog geen sterke concrete matches op volgens de ruimtelijke en trajectlogica.");
         }
 
+        if (nonCarCampus.length) {
+            conclusion.push(`Tegelijk wordt de insteek bewaakt via een aparte modal-shiftanalyse. Het huidige shift-risico binnen de niet-autogroep wordt ingeschat als ${modalShiftRiskLabel(shiftRiskScore).toLowerCase()}.`);
+        }
+
         conclusion.push(`De algemene pilot readiness komt uit op ${readinessScore}/100, wat neerkomt op: ${describeReadiness(readinessScore).toLowerCase()}.`);
 
         container.innerHTML = conclusion.map(text => `<p>${text}</p>`).join("");
+    }
+
+    function buildShiftSection(nonCarCampus) {
+        const considerYesMaybe = nonCarCampus.filter(r => ["Ja", "Misschien"].includes(getNonCarConsiderCarValue(r)));
+        const wouldCarpoolIfCar = considerYesMaybe.filter(r => ["Ja", "Misschien"].includes(getNonCarToCarpoolValue(r)));
+        const noCarEvenThen = nonCarCampus.filter(r => getNonCarConsiderCarValue(r) === "Nee");
+        const platformPositive = nonCarCampus.filter(r => ["Ja", "Misschien"].includes(r.sustainabilityOpinion));
+        const reasons = countMulti(nonCarCampus, getNonCarReasons);
+        const topReason = topEntries(reasons, 1)[0];
+
+        const considerRatio = percentage(considerYesMaybe.length, nonCarCampus.length);
+        const wouldCarpoolRatio = percentage(wouldCarpoolIfCar.length, considerYesMaybe.length);
+        const sustainabilityBuffer = percentage(noCarEvenThen.length, nonCarCampus.length);
+        const platformSupport = percentage(platformPositive.length, nonCarCampus.length);
+
+        let shiftRiskScore = 0;
+        shiftRiskScore += considerRatio * 0.6;
+        shiftRiskScore += wouldCarpoolRatio * 0.25;
+        shiftRiskScore += (100 - sustainabilityBuffer) * 0.15;
+        shiftRiskScore = Math.round(Math.max(0, Math.min(100, shiftRiskScore)));
+
+        const riskLabel = modalShiftRiskLabel(shiftRiskScore);
+
+        setText("shiftKpiNonCarCampus", String(nonCarCampus.length));
+        setText("shiftKpiConsiderCar", `${considerRatio}%`);
+        setText("shiftKpiWouldCarpool", `${wouldCarpoolRatio}%`);
+        setText("shiftKpiRiskLevel", riskLabel);
+        setText("shiftKpiSustainabilityBuffer", `${sustainabilityBuffer}%`);
+        setText("shiftKpiPlatformSupport", `${platformSupport}%`);
+
+        const insightContainer = document.getElementById("shiftInsightList");
+        const conclusionContainer = document.getElementById("shiftConclusion");
+
+        const insights = [];
+
+        if (!nonCarCampus.length) {
+            if (insightContainer) {
+                insightContainer.innerHTML = `<div class="empty-block">Geen niet-autogebruikers van KU Leuven/Odisee in de huidige selectie.</div>`;
+            }
+            if (conclusionContainer) {
+                conclusionContainer.innerHTML = `<p>Er zijn momenteel geen gegevens om de insteek te testen op modal shift.</p>`;
+            }
+            return { shiftRiskScore, riskLabel };
+        }
+
+        insights.push({
+            title: "Bewuste scheiding",
+            text: "Deze groep telt niet mee in de gerapporteerde CO2-besparing. Zo vermijd je dat een mogelijke verschuiving vanuit OV, fiets of te voet als positieve klimaatwinst wordt voorgesteld."
+        });
+
+        insights.push({
+            title: "Auto-overweging",
+            text: `${considerRatio}% van de niet-autogebruikers zegt dat de auto ooit een optie zou kunnen zijn. Dat is de eerste indicator voor mogelijke modal shift.`
+        });
+
+        insights.push({
+            title: "Carpool bij hypothetische auto",
+            text: `${wouldCarpoolRatio}% van de auto-overwegers zegt dat ze dan ook carpool zouden overwegen. Dat toont potentieel, maar ook risico als de insteek te breed wordt gecommuniceerd.`
+        });
+
+        insights.push({
+            title: "Duurzaamheidsbuffer",
+            text: `${sustainabilityBuffer}% van de niet-autogroep wil zelfs hypothetisch geen auto overwegen. Dat beschermt de duurzaamheid van de insteek.`
+        });
+
+        if (topReason) {
+            insights.push({
+                title: "Sterkste reden om geen auto te nemen",
+                text: `"${topReason[0]}" komt het vaakst terug bij niet-autogebruikers en werkt dus als natuurlijke rem op extra autogebruik.`
+            });
+        }
+
+        if (insightContainer) {
+            insightContainer.innerHTML = insights.map(item => `
+                <div class="insight-card">
+                    <h4>${item.title}</h4>
+                    <p>${item.text}</p>
+                </div>
+            `).join("");
+        }
+
+        if (conclusionContainer) {
+            const lines = [];
+
+            if (riskLabel === "Laag") {
+                lines.push("De huidige insteek lijkt goed afgebakend. Op basis van deze data is er slechts beperkt risico dat het project mensen uit fiets, te voet of openbaar vervoer richting auto-carpool trekt.");
+            } else if (riskLabel === "Middel") {
+                lines.push("De insteek is bruikbaar, maar vraagt duidelijke communicatie. Benadruk expliciet dat het project vooral bedoeld is om bestaande autoritten efficiënter te maken, niet om niet-autogebruikers naar de auto te trekken.");
+            } else {
+                lines.push("Er is een duidelijk shift-risico zichtbaar. Zonder scherpe communicatie of doelgroepafbakening kan het project ook niet-autogebruikers richting auto-carpool doen kijken.");
+            }
+
+            lines.push("Communiceer daarom expliciet dat de prioriteit ligt bij huidige autobestuurders met parkeerdruk, niet bij mensen die vandaag al duurzaam reizen.");
+            lines.push("Gebruik dit tabje dus als controlemechanisme: hoog enthousiasme voor carpool is niet automatisch positief als het uit de niet-autogroep komt.");
+
+            conclusionContainer.innerHTML = lines.map(line => `<p>${line}</p>`).join("");
+        }
+
+        return { shiftRiskScore, riskLabel };
     }
 
     function destroyChart(name) {
@@ -701,7 +884,7 @@
         state.charts[name] = new Chart(canvas, config);
     }
 
-    function renderCharts(filtered, eligible) {
+    function renderCharts(filtered, eligible, nonCarCampus) {
         const transportCounts = countBy(filtered, r => r.transport);
         renderChart("transport", "transportChart", {
             type: "doughnut",
@@ -815,6 +998,116 @@
                 scales: { y: { beginAtZero: true } }
             }
         });
+
+        const shiftTransportCounts = countBy(nonCarCampus, r => r.transport || "Onbekend");
+        renderChart("shiftTransport", "shiftTransportChart", {
+            type: "doughnut",
+            data: {
+                labels: Object.keys(shiftTransportCounts),
+                datasets: [{ data: Object.values(shiftTransportCounts), borderWidth: 0 }]
+            },
+            options: {
+                plugins: { legend: { position: "bottom" } },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        const shiftConsiderCounts = {
+            "Ja": nonCarCampus.filter(r => getNonCarConsiderCarValue(r) === "Ja").length,
+            "Misschien": nonCarCampus.filter(r => getNonCarConsiderCarValue(r) === "Misschien").length,
+            "Nee": nonCarCampus.filter(r => getNonCarConsiderCarValue(r) === "Nee").length,
+            "Geen antwoord": nonCarCampus.filter(r => !getNonCarConsiderCarValue(r)).length
+        };
+        renderChart("shiftConsiderCar", "shiftConsiderCarChart", {
+            type: "bar",
+            data: {
+                labels: Object.keys(shiftConsiderCounts),
+                datasets: [{ label: "Niet-autogebruikers op campus", data: Object.values(shiftConsiderCounts) }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        const shiftToCarpoolCounts = {
+            "Ja": nonCarCampus.filter(r => getNonCarToCarpoolValue(r) === "Ja").length,
+            "Misschien": nonCarCampus.filter(r => getNonCarToCarpoolValue(r) === "Misschien").length,
+            "Nee": nonCarCampus.filter(r => getNonCarToCarpoolValue(r) === "Nee").length,
+            "Geen antwoord": nonCarCampus.filter(r => !getNonCarToCarpoolValue(r)).length
+        };
+        renderChart("shiftToCarpool", "shiftToCarpoolChart", {
+            type: "bar",
+            data: {
+                labels: Object.keys(shiftToCarpoolCounts),
+                datasets: [{ label: "Indien auto een optie wordt", data: Object.values(shiftToCarpoolCounts) }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        const shiftReasonsCounts = countMulti(nonCarCampus, getNonCarReasons);
+        renderChart("shiftReasons", "shiftReasonsChart", {
+            type: "bar",
+            data: {
+                labels: Object.keys(shiftReasonsCounts),
+                datasets: [{ label: "Aantal vermeldingen", data: Object.values(shiftReasonsCounts) }]
+            },
+            options: {
+                indexAxis: "y",
+                plugins: { legend: { display: false } },
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { x: { beginAtZero: true } }
+            }
+        });
+
+        const shiftPlatformOpinionCounts = {
+            "Ja": nonCarCampus.filter(r => r.sustainabilityOpinion === "Ja").length,
+            "Misschien": nonCarCampus.filter(r => r.sustainabilityOpinion === "Misschien").length,
+            "Nee": nonCarCampus.filter(r => r.sustainabilityOpinion === "Nee").length
+        };
+        renderChart("shiftPlatformOpinion", "shiftPlatformOpinionChart", {
+            type: "bar",
+            data: {
+                labels: Object.keys(shiftPlatformOpinionCounts),
+                datasets: [{ label: "Niet-autogebruikers", data: Object.values(shiftPlatformOpinionCounts) }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        const shiftDaysCounts = {
+            "Nooit": nonCarCampus.filter(r => r.realisticCarpoolDaysNonCar === "Nooit").length,
+            "1 dag per week": nonCarCampus.filter(r => r.realisticCarpoolDaysNonCar === "1 dag per week").length,
+            "2 dagen per week": nonCarCampus.filter(r => r.realisticCarpoolDaysNonCar === "2 dagen per week").length,
+            "3 dagen per week": nonCarCampus.filter(r => r.realisticCarpoolDaysNonCar === "3 dagen per week").length,
+            "4 of meer dagen per week": nonCarCampus.filter(r => r.realisticCarpoolDaysNonCar === "4 of meer dagen per week").length
+        };
+        renderChart("shiftDays", "shiftDaysChart", {
+            type: "bar",
+            data: {
+                labels: Object.keys(shiftDaysCounts),
+                datasets: [{ label: "Niet-autogebruikers", data: Object.values(shiftDaysCounts) }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
     }
 
     function renderMatchTable(matches) {
@@ -867,7 +1160,7 @@
                 <td>${r.originArea || "-"}</td>
                 <td>${r.transport || "-"}</td>
                 <td>${r.campusDays || "-"}</td>
-                <td>${r.openToCarpool || r.carpoolOpenness || "-"}</td>
+                <td>${r.openToCarpool || getNonCarToCarpoolValue(r) || "-"}</td>
                 <td>${r.createdAt ? new Date(r.createdAt).toLocaleDateString("nl-BE") : "-"}</td>
             </tr>
         `).join("");
@@ -1194,14 +1487,22 @@
             carpoolPartnerPreference: "Voorkeur carpoolpartner",
             ovReasonNotCar: "Waarom geen auto maar OV",
             ovSatisfaction: "Tevredenheid OV",
-            ovCarReason: "Wanneer OV-gebruiker wel auto neemt",
+            ovConsiderCar: "OV: auto ooit overwegen",
+            ovCarReason: "OV: wanneer wel auto",
+            ovToCarpool: "OV: dan carpool overwegen",
             bikeReasonNotCar: "Waarom geen auto maar fiets",
             bikeBadWeather: "Gedrag bij slecht weer",
-            bikeCarReason: "Wanneer fietser wel auto neemt",
+            bikeConsiderCar: "Fiets: auto ooit overwegen",
+            bikeCarReason: "Fiets: wanneer wel auto",
+            bikeToCarpool: "Fiets: dan carpool overwegen",
             walkReasonNotCar: "Waarom geen auto maar te voet",
-            walkCarReason: "Wanneer wandelaar wel auto neemt",
+            walkConsiderCar: "Te voet: auto ooit overwegen",
+            walkCarReason: "Te voet: wanneer wel auto",
+            walkToCarpool: "Te voet: dan carpool overwegen",
             otherReasonNotCar: "Waarom geen auto maar ander vervoer",
-            otherCarReason: "Wanneer wel auto",
+            otherConsiderCar: "Anders: auto ooit overwegen",
+            otherCarReason: "Anders: wanneer wel auto",
+            otherToCarpool: "Anders: dan carpool overwegen",
             parkingCampusOpinion: "Parkeerprobleem op campus",
             sustainabilityPriority: "Belang duurzaamheid",
             sustainabilityOpinion: "Nuttig carpoolplatform?",
@@ -1269,14 +1570,22 @@
             "carpoolPartnerPreference",
             "ovReasonNotCar",
             "ovSatisfaction",
+            "ovConsiderCar",
             "ovCarReason",
+            "ovToCarpool",
             "bikeReasonNotCar",
             "bikeBadWeather",
+            "bikeConsiderCar",
             "bikeCarReason",
+            "bikeToCarpool",
             "walkReasonNotCar",
+            "walkConsiderCar",
             "walkCarReason",
+            "walkToCarpool",
             "otherReasonNotCar",
+            "otherConsiderCar",
             "otherCarReason",
+            "otherToCarpool",
             "parkingCampusOpinion",
             "sustainabilityPriority",
             "sustainabilityOpinion",
@@ -1291,6 +1600,9 @@
             let value = respondent[key];
             if (key === "createdAt" && value) {
                 value = new Date(value).toLocaleString("nl-BE");
+            }
+            if (key === "sustainabilityPriority" && value !== undefined && value !== null && value !== "") {
+                value = sustainabilityPriorityLabel(Number(value));
             }
 
             const formatted = formatAnswerValue(value);
@@ -1320,6 +1632,7 @@
         const pairs = generateAllMatches(filtered);
         const uniqueMatches = pickBestUniqueMatches(pairs);
         const excluded = filtered.filter(excludedFromImpact);
+        const nonCarCampus = filtered.filter(nonCarCampusRespondent);
 
         const readinessBase =
             (percentage(willing.length, eligible.length) * 0.4) +
@@ -1328,6 +1641,10 @@
 
         const readinessScore = Math.max(0, Math.min(100, Math.round(readinessBase)));
         const totalPotentialCO2 = sum(uniqueMatches, m => m.co2);
+
+        const shiftMetrics = buildShiftSection(nonCarCampus);
+        const shiftRiskScore = shiftMetrics.shiftRiskScore;
+
         const risk = mainRiskLabel(eligible);
 
         setText("datasetTimestamp", new Date().toLocaleString("nl-BE"));
@@ -1347,14 +1664,14 @@
         setText("predictedMainRisk", risk.title);
         setText("predictedMainRiskText", risk.text);
 
-        buildInsights(filtered, eligible, willing, uniqueMatches, readinessScore);
+        buildInsights(filtered, eligible, willing, uniqueMatches, readinessScore, nonCarCampus, shiftRiskScore);
         buildParkingInsights(eligible, uniqueMatches);
         buildPostcodeClusters(filtered);
-        buildMethodology(filtered, eligible, pairs, uniqueMatches);
-        buildFinalConclusion(filtered, eligible, willing, uniqueMatches, readinessScore, totalPotentialCO2);
+        buildMethodology(filtered, eligible, pairs, uniqueMatches, nonCarCampus);
+        buildFinalConclusion(filtered, eligible, willing, uniqueMatches, readinessScore, totalPotentialCO2, nonCarCampus, shiftRiskScore);
         renderMatchTable(uniqueMatches);
         renderRespondentTable(filtered);
-        renderCharts(filtered, eligible);
+        renderCharts(filtered, eligible, nonCarCampus);
 
         setTimeout(() => {
             renderOverviewMap(filtered);

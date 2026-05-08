@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script
         src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        integrity="sha256-20nQCchB9co0qIjZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin=""
     ></script>
 </head>
@@ -47,9 +47,9 @@
             <section class="hero">
                 <div class="hero-copy">
                     <p class="eyebrow">Campusmobiliteit Gent</p>
-                    <h2>Een helder overzicht van mobiliteit, parkingdruk en carpoolpotentieel</h2>
+                    <h2>Een helder overzicht van mobiliteit, parkingdruk, carpoolpotentieel en modal shift</h2>
                     <p class="hero-text">
-                        Analyse van mobiliteitsgedrag, regionale spreiding, parkeerdruk en realistische carpoolmatches op basis van de ingevulde bevraging.
+                        Analyse van mobiliteitsgedrag, regionale spreiding, parkeerdruk, realistische carpoolmatches én het risico op ongewenste verschuivingen vanuit fiets, te voet of openbaar vervoer.
                     </p>
                 </div>
 
@@ -60,7 +60,7 @@
                     </div>
                     <div class="hero-stat-card">
                         <span class="hero-stat-label">Focus</span>
-                        <strong class="hero-stat-value">Mobiliteit & parking</strong>
+                        <strong class="hero-stat-value">Mobiliteit, parking & duurzaamheid</strong>
                     </div>
                 </div>
             </section>
@@ -69,6 +69,7 @@
                 <nav class="tab-switcher" aria-label="Dashboard navigatie">
                     <button class="top-tab active" data-tab-target="overviewTab">Overzicht</button>
                     <button class="top-tab" data-tab-target="parkingTab">Parking</button>
+                    <button class="top-tab" data-tab-target="shiftTab">Modal shift</button>
                     <button class="top-tab" data-tab-target="matchesTab">Matchmaker</button>
                     <button class="top-tab" data-tab-target="respondentsTab">Respondenten</button>
                 </nav>
@@ -119,7 +120,7 @@
                     </div>
 
                     <div class="analysis-note">
-                        CO2 wordt enkel berekend voor huidige autobestuurders van KU Leuven en Odisee. Zo vermijd je een verschuiving van fiets of openbaar vervoer naar auto-carpool. De matchlogica is bewust iets losser zodat ook kleinere datasets bruikbare matches tonen.
+                        CO2 en matchimpact worden enkel berekend voor huidige autobestuurders van KU Leuven en Odisee. Niet-autogebruikers blijven wel zichtbaar in aparte analyses, zodat je expliciet kunt controleren of het concept geen ongewenste shift veroorzaakt van openbaar vervoer, fiets of te voet naar auto-carpool.
                     </div>
                 </section>
             </section>
@@ -133,7 +134,7 @@
                     </article>
 
                     <article class="kpi-card">
-                        <span class="kpi-label">Relevant voor carpool</span>
+                        <span class="kpi-label">Relevant voor carpoolimpact</span>
                         <strong id="kpiEligibleCarpool" class="kpi-value">0</strong>
                         <p class="kpi-subtext">Autogebruikers van KU Leuven en Odisee</p>
                     </article>
@@ -157,9 +158,9 @@
                     </article>
 
                     <article class="kpi-card">
-                        <span class="kpi-label">Niet meegerekend</span>
+                        <span class="kpi-label">Niet-autogebruikers</span>
                         <strong id="kpiExcludedNonDrivers" class="kpi-value">0</strong>
-                        <p class="kpi-subtext">Niet-autogebruikers</p>
+                        <p class="kpi-subtext">Apart geanalyseerd, niet meegerekend in CO2</p>
                     </article>
                 </section>
 
@@ -237,7 +238,7 @@
                         <div class="panel-head">
                             <div>
                                 <p class="panel-kicker">Interesse</p>
-                                <h3>Carpoolbereidheid</h3>
+                                <h3>Carpoolbereidheid huidige chauffeurs</h3>
                             </div>
                         </div>
                         <canvas id="carpoolInterestChart"></canvas>
@@ -364,6 +365,134 @@
                             </div>
                         </div>
                         <div id="parkingInsightList" class="insight-list"></div>
+                    </article>
+                </section>
+            </section>
+
+            <section id="shiftTab" class="top-tab-panel">
+                <section class="kpi-grid">
+                    <article class="kpi-card">
+                        <span class="kpi-label">Niet-auto op campus</span>
+                        <strong id="shiftKpiNonCarCampus" class="kpi-value">0</strong>
+                        <p class="kpi-subtext">KU Leuven/Odisee zonder huidige auto</p>
+                    </article>
+
+                    <article class="kpi-card">
+                        <span class="kpi-label">Zouden auto overwegen</span>
+                        <strong id="shiftKpiConsiderCar" class="kpi-value">0%</strong>
+                        <p class="kpi-subtext">Binnen die niet-autogroep</p>
+                    </article>
+
+                    <article class="kpi-card">
+                        <span class="kpi-label">Zouden dan carpool overwegen</span>
+                        <strong id="shiftKpiWouldCarpool" class="kpi-value">0%</strong>
+                        <p class="kpi-subtext">Binnen de auto-overwegers</p>
+                    </article>
+
+                    <article class="kpi-card">
+                        <span class="kpi-label">Shift-risico</span>
+                        <strong id="shiftKpiRiskLevel" class="kpi-value">Laag</strong>
+                        <p class="kpi-subtext">Kans op ongewenste overstap naar auto-carpool</p>
+                    </article>
+
+                    <article class="kpi-card">
+                        <span class="kpi-label">Duurzaamheidsbuffer</span>
+                        <strong id="shiftKpiSustainabilityBuffer" class="kpi-value">0%</strong>
+                        <p class="kpi-subtext">Niet-auto die géén auto wil overwegen</p>
+                    </article>
+
+                    <article class="kpi-card">
+                        <span class="kpi-label">Campusmening</span>
+                        <strong id="shiftKpiPlatformSupport" class="kpi-value">0%</strong>
+                        <p class="kpi-subtext">Niet-auto die platform nuttig vindt</p>
+                    </article>
+                </section>
+
+                <section class="section-grid section-grid-2">
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Controle</p>
+                                <h3>Is de insteek goed?</h3>
+                            </div>
+                        </div>
+                        <div id="shiftInsightList" class="insight-list"></div>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Waarschuwing</p>
+                                <h3>Shift-evaluatie</h3>
+                            </div>
+                        </div>
+                        <div id="shiftConclusion" class="final-conclusion"></div>
+                    </article>
+                </section>
+
+                <section class="section-grid section-grid-2">
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Niet-autogroep</p>
+                                <h3>Huidig vervoersmiddel</h3>
+                            </div>
+                        </div>
+                        <canvas id="shiftTransportChart"></canvas>
+                    </article>
+
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Risico</p>
+                                <h3>Auto-overweging</h3>
+                            </div>
+                        </div>
+                        <canvas id="shiftConsiderCarChart"></canvas>
+                    </article>
+                </section>
+
+                <section class="section-grid section-grid-2">
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Potentieel</p>
+                                <h3>Carpool bij hypothetische auto</h3>
+                            </div>
+                        </div>
+                        <canvas id="shiftToCarpoolChart"></canvas>
+                    </article>
+
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Waarom geen auto</p>
+                                <h3>Beschermende factoren</h3>
+                            </div>
+                        </div>
+                        <canvas id="shiftReasonsChart"></canvas>
+                    </article>
+                </section>
+
+                <section class="section-grid section-grid-2">
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Perceptie</p>
+                                <h3>Nuttig platform volgens niet-auto</h3>
+                            </div>
+                        </div>
+                        <canvas id="shiftPlatformOpinionChart"></canvas>
+                    </article>
+
+                    <article class="panel chart-panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="panel-kicker">Praktische haalbaarheid</p>
+                                <h3>Realistische carpooldagen niet-auto</h3>
+                            </div>
+                        </div>
+                        <canvas id="shiftDaysChart"></canvas>
                     </article>
                 </section>
             </section>

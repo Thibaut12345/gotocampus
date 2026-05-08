@@ -13,14 +13,18 @@ const heroInsightTitle = document.getElementById("heroInsightTitle");
 const heroInsightText = document.getElementById("heroInsightText");
 
 const STORAGE_KEY = "campus_mobility_survey_v6";
+const FIRST_QUESTION_ID = "privacyConsent";
 
 const savedState = loadSavedState();
 const answers = savedState.answers || {};
 let history = savedState.history || [];
-let currentQuestionId = savedState.currentQuestionId || "email";
+let currentQuestionId = savedState.currentQuestionId || FIRST_QUESTION_ID;
 let isSubmitting = false;
 
 const iconMap = {
+    "Ja, ik ga akkoord": "✅",
+    "Nee, ik ga niet akkoord": "❌",
+
     "Student": "🎓",
     "Personeel": "💼",
     "Overig": "👤",
@@ -158,6 +162,34 @@ const NON_CAR_REASON_OPTIONS = [
 ];
 
 const questions = {
+    privacyConsent: {
+        label: "Ga je akkoord met de verwerking van je gegevens?",
+        help: "Je antwoorden worden gebruikt voor dit mobiliteitsonderzoek rond carpoolen, parkeerdruk en duurzaamheid op en rond de campus. De gegevens worden enkel verwerkt voor analyse binnen dit project en worden niet doorverkocht of gebruikt voor commerciële doeleinden. Als je niet akkoord gaat, kan je de vragenlijst niet invullen.",
+        type: "choice",
+        options: [
+            {
+                value: "Ja, ik ga akkoord",
+                subtext: "Ik begrijp dat mijn antwoorden verwerkt worden voor dit onderzoek."
+            },
+            {
+                value: "Nee, ik ga niet akkoord",
+                subtext: "Zonder akkoord kan je niet deelnemen aan de vragenlijst."
+            }
+        ],
+        next: (value) => {
+            if (value === "Ja, ik ga akkoord") return "email";
+            return "privacyStop";
+        }
+    },
+
+    privacyStop: {
+        label: "Je kan de vragenlijst niet invullen zonder akkoord.",
+        help: "Omdat je antwoorden verwerkt moeten worden voor dit onderzoek, is toestemming noodzakelijk om verder te gaan.",
+        type: "info",
+        content: "Je hebt aangegeven dat je niet akkoord gaat met de verwerking van je gegevens. Daarom stopt de vragenlijst hier.",
+        next: () => "done"
+    },
+
     email: {
         label: "Wat is je e-mailadres?",
         help: "Dit is verplicht zodat dezelfde persoon de vragenlijst niet meerdere keren kan invullen. Als dit e-mailadres al gebruikt werd, krijg je meteen een melding.",
@@ -762,7 +794,7 @@ function getPredictedTotalSteps() {
             : currentLiveValue;
     }
 
-    let qid = "email";
+    let qid = FIRST_QUESTION_ID;
     let count = 0;
     let guard = 0;
 
@@ -787,7 +819,7 @@ function getPredictedTotalSteps() {
 
 function buildFinalPath() {
     const path = [];
-    let qid = "email";
+    let qid = FIRST_QUESTION_ID;
     let guard = 0;
 
     while (qid && qid !== "done" && guard < 200) {
@@ -1139,6 +1171,14 @@ function validateCurrentQuestion() {
 function updateButtons() {
     prevBtn.style.visibility = history.length === 0 ? "hidden" : "visible";
 
+    if (currentQuestionId === "privacyStop") {
+        nextBtn.classList.add("hidden");
+        submitBtn.classList.add("hidden");
+        skipBtn.classList.add("hidden");
+        topSubmitWrap.classList.add("hidden");
+        return;
+    }
+
     const currentQuestion = questions[currentQuestionId];
     const currentValue = answers[currentQuestionId] ?? getCurrentValue();
     const nextQuestion = currentQuestion.next ? currentQuestion.next(currentValue) : "done";
@@ -1165,7 +1205,11 @@ function updateProgress() {
     progressBar.style.width = `${progress}%`;
     progressText.textContent = `Stap ${currentStep} van ${totalSteps}`;
 
-    if (currentStep === 1) {
+    if (currentQuestionId === "privacyConsent") {
+        progressSubtext.textContent = "Toestemming voor deelname";
+    } else if (currentQuestionId === "privacyStop") {
+        progressSubtext.textContent = "De vragenlijst is gestopt";
+    } else if (currentQuestionId === "email") {
         progressSubtext.textContent = "Start met je e-mailadres";
     } else if (currentQuestionId === "summary") {
         progressSubtext.textContent = "Laatste controle voor verzenden";
@@ -1187,6 +1231,18 @@ function updateHeroInsight() {
     const parkingProblems = answers.parkingProblemFrequency || "";
     const parkingOpinion = answers.parkingCampusOpinion || "";
     const scheduleType = answers.scheduleType || "";
+
+    if (currentQuestionId === "privacyConsent") {
+        heroInsightTitle.textContent = "Eerst even je toestemming";
+        heroInsightText.textContent = "We gebruiken je antwoorden enkel om campusmobiliteit, parkeerdruk en carpoolpotentieel te analyseren binnen dit project.";
+        return;
+    }
+
+    if (currentQuestionId === "privacyStop") {
+        heroInsightTitle.textContent = "Geen probleem";
+        heroInsightText.textContent = "Zonder toestemming verwerken we geen antwoorden en kan de vragenlijst niet verder ingevuld worden.";
+        return;
+    }
 
     if (currentQuestionId === "summary") {
         heroInsightTitle.textContent = "Bedankt, jouw input maakt het verschil";
