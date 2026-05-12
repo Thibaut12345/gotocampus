@@ -95,7 +95,7 @@ async function sendConfirmationEmail(toEmail, answers = {}) {
                     <div style="margin: 25px 0; padding: 20px; background: #ecfdf5; border-left: 5px solid #10b981; border-radius: 8px;">
                         <h3 style="margin-top: 0;">Je beloning</h3>
                         <p style="margin-bottom: 0;">
-                            Toon deze mail aan ons team op campus en ontvang jouw beloning.
+                            Toon deze mail aan ons team op campus onder de middag op 13/5 en ontvang jouw beloning.
                         </p>
                     </div>
 
